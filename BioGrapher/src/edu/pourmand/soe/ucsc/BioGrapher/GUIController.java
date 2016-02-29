@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+import apple.laf.JRSUIConstants.Size;
 import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
 
 import static edu.pourmand.soe.ucsc.BioGrapher.DataProvider.dP;
@@ -67,6 +68,44 @@ public class GUIController implements Initializable {
 	TextFlow txfwReport;
 	@FXML
 	Button btnReloadStatus;
+	@FXML
+	ProgressBar pbMainProgressBar;
+	
+	static XYChart.Series<Number, Number> mainSeries = new XYChart.Series<Number, Number>();
+	static double progress = 0;
+	private void createSeries_Type_2(DataList refDataList) {
+		double size = refDataList.getListType_2().size();
+		double counter = 0;
+		mainSeries = new XYChart.Series<Number, Number>();
+		mainSeries.setName(refDataList.getFileTitle());
+		for (DataType_2 refType_2 : refDataList.getListType_2()) {
+			mainSeries.getData()
+					.add(new XYChart.Data<Number, Number>(//
+							refType_2.getTime(), //
+							refType_2.getAverageVol()));
+			progress = counter++/size;
+			System.out.println(progress);
+		}
+	}
+	
+	private boolean isDataExists() {
+		if (dP.getMainList() == null) {
+			showAlertError(msg.getString("<GUITEXT>TitleError"), //
+					msg.getString("<GUITEXT>HeaderError"), //
+					msg.getString("<GUITEXT>ContentError_NoDataFound"), //
+					new Exception("No data found"));
+			btnComparisonPlot.setDisable(true);
+			btnCalibrationPlot.setDisable(true);
+			return false;
+		}
+		return true;
+	}
+
+	private void removeGraph() {
+		while (!chartMainChart.getData().isEmpty()) {
+			chartMainChart.getData().remove(chartMainChart.getData().size() - 1);
+		}
+	}
 
 	public void actionReloadStatus() {
 		printReport();
@@ -82,18 +121,33 @@ public class GUIController implements Initializable {
 	}
 
 	public void actionCalibrationPlot(ActionEvent event) {
-		btnCalibrationPlot.setDisable(true);
-		btnComparisonPlot.setDisable(false);
+		removeGraph();
+		if (!isDataExists()) {
+			return;
+		}
+		if (!dP.getMainList().isEmpty()) {
+			chartMainChart.setCreateSymbols(false); // hide dots
+			
+			for (DataList refDataList : dP.getMainList()) {
+				pbMainProgressBar.setProgress(progress);
+				Runnable task = () -> {
+					createSeries_Type_2(refDataList);
+				};
+				new Thread(task).start();
+				
+				chartMainChart.getData().add(mainSeries);
+			} // for
+			
+			
+			this.printReport();
+			btnComparisonPlot.setDisable(true);
+			btnCalibrationPlot.setDisable(false);
+		}
 	}
 
 	public void actionComparisonPlot() {
-		if (dP.getMainList() == null) {
-			showAlertError(msg.getString("<GUITEXT>TitleError"), //
-					msg.getString("<GUITEXT>HeaderError"), //
-					msg.getString("<GUITEXT>ContentError_NoDataFound"), //
-					new Exception("No data found"));
-			btnComparisonPlot.setDisable(true);
-			btnCalibrationPlot.setDisable(true);
+		removeGraph();
+		if (!isDataExists()) {
 			return;
 		}
 		if (!dP.getMainList().isEmpty()) {
@@ -114,6 +168,7 @@ public class GUIController implements Initializable {
 			} // for
 
 			this.printReport();
+			mainSeries = new XYChart.Series<Number, Number>();
 			btnComparisonPlot.setDisable(true);
 			btnCalibrationPlot.setDisable(false);
 		}
@@ -123,7 +178,7 @@ public class GUIController implements Initializable {
 		// TODO
 	}
 
-	public void printReport() {
+	private void printReport() {
 		while (!txfwReport.getChildren().isEmpty()) {
 			txfwReport.getChildren().remove(txfwReport.getChildren().size() - 1);
 		}
@@ -142,6 +197,10 @@ public class GUIController implements Initializable {
 		chooser.setTitle("Open File");
 		List<File> fileList = chooser.showOpenMultipleDialog(refStage);
 		if (fileList != null) {
+			removeGraph();
+			btnCalibrationPlot.setDisable(false);
+			btnComparisonPlot.setDisable(false);
+			btnClearData.setDisable(false);
 			dP.setWorkingFiles(fileList);
 			sM.isDataInputted = true;
 			sM.currentState = States.CALIBRATING;
@@ -160,13 +219,13 @@ public class GUIController implements Initializable {
 				msg.getString("<GUITEXT>HeaderConfirmLoadPathFile"), //
 				msg.getString("<GUITEXT>ContentConfirmClearData"));
 		sM.isAlertClearDataComirmed = isConfirmed;
-		while (!chartMainChart.getData().isEmpty()) {
-			chartMainChart.getData().remove(chartMainChart.getData().size() - 1);
+		if (isConfirmed) {
+			this.removeGraph();
+			btnCalculateConcentration.setDisable(true);
+			btnCalibrationPlot.setDisable(true);
+			main.executeStateMachine();
+			printReport();
 		}
-		btnCalculateConcentration.setDisable(true);
-		btnCalibrationPlot.setDisable(true);
-		main.executeStateMachine();
-		printReport();
 	}
 
 	/**

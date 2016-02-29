@@ -65,33 +65,21 @@ class DataType_1 {
 class DataType_2 {
 
 	private double time;
-	private double trace_1_mV;
-	private double trace_1_pA;
-	private double trace_2_mV;
-	private double trace_2_pA;
-	private double trace_3_mV;
-	private double trace_3_pA;
+	private double averageVol;
 
 	protected DataType_2(double time, double trace_1_mV, double trace_1_pA, double trace_2_mV, double trace_2_pA,
 			double trace_3_mV, double trace_3_pA) {
 		this.time = time;
-		this.trace_1_mV = trace_1_mV;
-		this.trace_1_pA = trace_1_pA;
-		this.trace_2_mV = trace_2_mV;
-		this.trace_2_pA = trace_2_pA;
-		this.trace_3_mV = trace_3_mV;
-		this.trace_3_pA = trace_3_pA;
+		this.averageVol = (trace_1_mV + trace_2_mV + trace_3_mV)/3;
 	}
 
 	protected DataType_2(String time, String trace_1_mV, String trace_1_pA, String trace_2_mV, String trace_2_pA,
 			String trace_3_mV, String trace_3_pA) {
 		this.time = Double.parseDouble(time);
-		this.trace_1_mV = Double.parseDouble(trace_1_mV);
-		this.trace_1_pA = Double.parseDouble(trace_1_pA);
-		this.trace_2_mV = Double.parseDouble(trace_2_mV);
-		this.trace_2_pA = Double.parseDouble(trace_2_pA);
-		this.trace_3_mV = Double.parseDouble(trace_3_mV);
-		this.trace_3_pA = Double.parseDouble(trace_3_pA);
+		Double d = Double.parseDouble(trace_1_mV);
+		d += Double.parseDouble(trace_2_mV);
+		d += Double.parseDouble(trace_3_mV);
+		this.averageVol = (d)/3;
 	}
 
 	protected double getTime() {
@@ -102,52 +90,12 @@ class DataType_2 {
 		this.time = time;
 	}
 
-	protected double getTrace_1_mV() {
-		return trace_1_mV;
+	protected double getAverageVol() {
+		return averageVol;
 	}
 
-	protected void setTrace_1_mV(double trace_1_mV) {
-		this.trace_1_mV = trace_1_mV;
-	}
-
-	protected double getTrace_1_pA() {
-		return trace_1_pA;
-	}
-
-	protected void setTrace_1_pA(double trace_1_pA) {
-		this.trace_1_pA = trace_1_pA;
-	}
-
-	protected double getTrace_2_mV() {
-		return trace_2_mV;
-	}
-
-	protected void setTrace_2_mV(double trace_2_mV) {
-		this.trace_2_mV = trace_2_mV;
-	}
-
-	protected double getTrace_2_pA() {
-		return trace_2_pA;
-	}
-
-	protected void setTrace_2_pA(double trace_2_pA) {
-		this.trace_2_pA = trace_2_pA;
-	}
-
-	protected double getTrace_3_mV() {
-		return trace_3_mV;
-	}
-
-	protected void setTrace_3_mV(double trace_3_mV) {
-		this.trace_3_mV = trace_3_mV;
-	}
-
-	protected double getTrace_3_pA() {
-		return trace_3_pA;
-	}
-
-	protected void setTrace_3_pA(double trace_3_pA) {
-		this.trace_3_pA = trace_3_pA;
+	protected void setAverageVol(double averageVol) {
+		this.averageVol = averageVol;
 	}
 
 }

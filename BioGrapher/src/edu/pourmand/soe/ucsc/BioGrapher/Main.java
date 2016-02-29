@@ -13,7 +13,6 @@ package edu.pourmand.soe.ucsc.BioGrapher;
 
 import java.io.File;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
 import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
 import static java.lang.System.out;

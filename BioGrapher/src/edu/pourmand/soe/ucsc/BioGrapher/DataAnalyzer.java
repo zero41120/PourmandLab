@@ -278,6 +278,7 @@ public class DataAnalyzer {
 	 */
 	private DataType_2 createDataType_2_Object(String line) {
 		StringTokenizer stk = new StringTokenizer(line);
+		// All data will be parsed, but only the voltage will be stored in the object
 		DataType_2 temp = new DataType_2(stk.nextToken("\t"), stk.nextToken("\t"), stk.nextToken("\t"),
 				stk.nextToken("\t"), stk.nextToken("\t"), stk.nextToken("\t"), stk.nextToken("\t"));
 		return temp;
