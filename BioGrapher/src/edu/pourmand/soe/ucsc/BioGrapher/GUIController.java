@@ -48,46 +48,54 @@ public class GUIController implements Initializable {
 	@FXML Button btnCalibrationPlot;
 	@FXML Button btnComparisonPlot;
 	@FXML Button btnCalculateConcentration;
+	@FXML Button btnReloadStatus;
 	@FXML TextField txfCVVoltageUsed;
 	@FXML TextField txfTCVVoltageUsed;
 	@FXML TextField txfTCVConcentration;
 	@FXML TextField txfConcentrationInput;
-	@FXML LineChart<Number, Number> chartMainChart;
+	@FXML TextFlow txfwReport;
 	@FXML NumberAxis charMainxAxis;
 	@FXML NumberAxis charMainyAxis;
-	@FXML TextFlow txfwReport;
-	@FXML Button btnReloadStatus;
 	@FXML ProgressBar pbMainProgressBar;
+	@FXML LineChart<Number, Number> chartMainChart;
 	// @formatter:on
-	
-	XYChart.Series<Number, Number> mainSeries = new XYChart.Series<Number, Number>();
+
 	static double progressSize = 0;
 	static double progressCounter = 0;
-	static double progress = 0;
 
+
+	private void createSeries_Type_1(DataList refDataList) {
+		if (refDataList.getListType_1() == null) {
+			return;
+		}
+		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
+		progressSize += refDataList.getListType_1().size();
+		series.setName(refDataList.getFileTitle());
+		for (DataType_1 refType_1 : refDataList.getListType_1()) {
+			series.getData().add(new XYChart.Data<Number, Number>(refType_1.getVoltage(), refType_1.getCurrnet()));
+			pbMainProgressBar.setProgress(progressCounter++ / progressSize);
+		}
+		Runnable addData = () -> {
+			chartMainChart.getData().add(series);
+		};
+		Platform.runLater(addData);
+	}
+	
 	private void createSeries_Type_2(DataList refDataList) {
+		if (refDataList.getListType_2() == null) {
+			return;
+		}
+		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
 		progressSize += refDataList.getListType_2().size();
-		XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
-		series = new XYChart.Series<Number, Number>();
 		series.setName(refDataList.getFileTitle());
 		for (DataType_2 refType_2 : refDataList.getListType_2()) {
-			series.getData()
-					.add(new XYChart.Data<Number, Number>(//
-							refType_2.getTime(), //
-							refType_2.getAverageVol()));
-			System.out.println(progressCounter/progressSize);
-			pbMainProgressBar.setProgress(progressCounter++/progressSize);
+			series.getData().add(new XYChart.Data<Number, Number>(refType_2.getTime(), refType_2.getAverageVol()));
+			pbMainProgressBar.setProgress(progressCounter++ / progressSize);
 		}
-		mainSeries = series;
-
-		Platform.runLater(new Runnable() {
-			
-			@Override
-			public void run() {
-				chartMainChart.getData().add(mainSeries);				
-			}
-		});
-
+		Runnable addData = () -> {
+			chartMainChart.getData().add(series);
+		};
+		Platform.runLater(addData);
 	}
 
 	private boolean isDataExists() {
@@ -116,8 +124,14 @@ public class GUIController implements Initializable {
 					btnCalibrationPlot.isDisable() && //
 					btnComparisonPlot.isDisable()) {
 				btnClearData.setDisable(false);
-				btnCalibrationPlot.setDisable(false);
-				btnComparisonPlot.setDisable(false);
+				for (DataList refDataList : dP.getMainList()) {
+					if (refDataList.getListType_1() != null) {
+						btnComparisonPlot.setDisable(false);
+					}
+					if (refDataList.getListType_2() != null) {
+						btnCalibrationPlot.setDisable(false);
+					}
+				}
 			}
 		}
 	}
@@ -129,21 +143,18 @@ public class GUIController implements Initializable {
 		}
 		this.printReport();
 		btnCalibrationPlot.setDisable(true);
-		chartMainChart.setCreateSymbols(false); // hide dots
+		chartMainChart.setCreateSymbols(false);
+		pbMainProgressBar.setProgress(0);
+		progressCounter = 0;
+		progressSize = 0;
 		if (!dP.getMainList().isEmpty()) {
-			// Create a task for a new thread to run.
-			Thread seriesThread;
-			pbMainProgressBar.setProgress(progress);
-
 			for (DataList refDataList : dP.getMainList()) {
-				System.out.println("Enter");
 				Runnable task = () -> {
 					createSeries_Type_2(refDataList);
 				};
-				seriesThread = new Thread(task);
-				seriesThread.start();
+				Thread seriesThreads = new Thread(task);
+				seriesThreads.start();
 			}
-
 		}
 	}
 
@@ -152,14 +163,18 @@ public class GUIController implements Initializable {
 		if (!isDataExists()) {
 			return;
 		}
-		btnComparisonPlot.setDisable(true);
-		btnCalibrationPlot.setDisable(false);
+		this.printReport();
+		btnComparisonPlot.setDisable(true); // Disable this button
+		chartMainChart.setCreateSymbols(false); // Hide dots
+		pbMainProgressBar.setProgress(0);
+		progressCounter = 0;
+		progressSize = 0;
+		charMainxAxis.setLowerBound(-1);
+		charMainxAxis.setUpperBound(1);
 		if (!dP.getMainList().isEmpty()) {
-			charMainxAxis.setLowerBound(-1);
-			charMainxAxis.setUpperBound(1);
-			chartMainChart.setCreateSymbols(false); // hide dots
-			XYChart.Series<Number, Number> series = null;
 			for (DataList refDataList : dP.getMainList()) {
+				createSeries_Type_1(refDataList);
+				/*
 				series = new XYChart.Series<Number, Number>();
 				for (DataType_1 refType_1 : refDataList.getListType_1()) {
 					series.getData()
@@ -169,9 +184,9 @@ public class GUIController implements Initializable {
 				}
 				series.setName(refDataList.getFileTitle());
 				chartMainChart.getData().add(series);
-			} // for
+				*/
+			} 
 
-			this.printReport();
 		}
 	}
 
@@ -199,13 +214,19 @@ public class GUIController implements Initializable {
 		List<File> fileList = chooser.showOpenMultipleDialog(refStage);
 		if (fileList != null) {
 			removeGraph();
-			btnCalibrationPlot.setDisable(false);
-			btnComparisonPlot.setDisable(false);
 			btnClearData.setDisable(false);
 			dP.setWorkingFiles(fileList);
 			sM.isDataInputted = true;
 			sM.currentState = States.CALIBRATING;
 			main.executeStateMachine();
+		}
+		for (DataList refDataList : dP.getMainList()) {
+			if (refDataList.getListType_1() != null) {
+				btnComparisonPlot.setDisable(false);
+			}
+			if (refDataList.getListType_2() != null) {
+				btnCalibrationPlot.setDisable(false);
+			}
 		}
 		printReport();
 	}
@@ -224,7 +245,7 @@ public class GUIController implements Initializable {
 			this.removeGraph();
 			btnCalculateConcentration.setDisable(true);
 			btnCalibrationPlot.setDisable(true);
-			btnCalibrationPlot.setDisable(true);
+			btnComparisonPlot.setDisable(true);
 			btnClearData.setDisable(true);
 			main.executeStateMachine();
 			printReport();
