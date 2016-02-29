@@ -109,7 +109,6 @@ public class Main extends Application {
 						sM.currentState = States.DISPLAYING;
 						dP.resetProviderAndKeepData(true);
 						main.executeStateMachine();
-						// TODO show file not found.
 						break;
 					}
 				}
@@ -126,7 +125,6 @@ public class Main extends Application {
 					out.println("(" + dP.getCurrentType() + ")");
 				} else {
 					// Bad signature.
-					// TODO show file not supported
 					out.println(msg.getString("<Error>DataCalibate"));
 					main.executeStateMachine();
 					break;
@@ -148,7 +146,6 @@ public class Main extends Application {
 				} else {
 					// Good signature, bad data.
 					out.println(msg.getString("<Error>DataVariable"));
-					// TODO show data not supported
 					main.executeStateMachine();
 					break;
 				}
@@ -174,7 +171,6 @@ public class Main extends Application {
 				 * Goto DISPLAYING state.
 				 */
 				if (sM.isAlertLoadPathConfirmed) {
-					// TODO call graph method.
 					sM.isAlertClearDataComirmed = false;
 				}
 				sM.isDataInputted = false;

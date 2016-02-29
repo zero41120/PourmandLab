@@ -28,11 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-import javax.swing.SwingWorker;
-
-import apple.laf.JRSUIConstants.Size;
 import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
-
 import static edu.pourmand.soe.ucsc.BioGrapher.DataProvider.dP;
 import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.sM;
 import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.msg;
@@ -191,7 +187,7 @@ public class GUIController implements Initializable {
 	}
 
 	public void actionCalculateConcentration() {
-		// TODO
+		// TODO Linear aggression? 
 	}
 
 	private void printReport() {
@@ -351,6 +347,10 @@ public class GUIController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
+		btnCalibrationPlot.setText(msg.getString("<GUITEXT>ButtonCalibration"));
+		btnComparisonPlot.setText(msg.getString("<GUITEXT>ButtonComparision"));
+		btnClearData.setText(msg.getString("<GUITEXT>ButtonClearData"));
+		btnBrowse.setText(msg.getString("<GUITEXT>ButtonBrowse"));
 		btnCalibrationPlot.setDisable(true);
 		btnComparisonPlot.setDisable(true);
 		btnClearData.setDisable(true);
