@@ -1,5 +1,6 @@
 package edu.pourmand.soe.ucsc.BioGrapher;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -27,6 +28,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+import javax.swing.SwingWorker;
+
 import apple.laf.JRSUIConstants.Size;
 import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
 
@@ -39,55 +42,54 @@ import static edu.pourmand.soe.ucsc.BioGrapher.Main.main;
 import static java.lang.System.out;
 
 public class GUIController implements Initializable {
-
-	@FXML
-	Button btnBrowse;
-	@FXML
-	Button btnClearData;
-	@FXML
-	Button btnCalibrationPlot;
-	@FXML
-	Button btnComparisonPlot;
-	@FXML
-	Button btnCalculateConcentration;
-	@FXML
-	TextField txfCVVoltageUsed;
-	@FXML
-	TextField txfTCVVoltageUsed;
-	@FXML
-	TextField txfTCVConcentration;
-	@FXML
-	TextField txfConcentrationInput;
-	@FXML
-	LineChart<Number, Number> chartMainChart;
-	@FXML
-	NumberAxis charMainxAxis;
-	@FXML
-	NumberAxis charMainyAxis;
-	@FXML
-	TextFlow txfwReport;
-	@FXML
-	Button btnReloadStatus;
-	@FXML
-	ProgressBar pbMainProgressBar;
+	// @formatter:off
+	@FXML Button btnBrowse;
+	@FXML Button btnClearData;
+	@FXML Button btnCalibrationPlot;
+	@FXML Button btnComparisonPlot;
+	@FXML Button btnCalculateConcentration;
+	@FXML TextField txfCVVoltageUsed;
+	@FXML TextField txfTCVVoltageUsed;
+	@FXML TextField txfTCVConcentration;
+	@FXML TextField txfConcentrationInput;
+	@FXML LineChart<Number, Number> chartMainChart;
+	@FXML NumberAxis charMainxAxis;
+	@FXML NumberAxis charMainyAxis;
+	@FXML TextFlow txfwReport;
+	@FXML Button btnReloadStatus;
+	@FXML ProgressBar pbMainProgressBar;
+	// @formatter:on
 	
-	static XYChart.Series<Number, Number> mainSeries = new XYChart.Series<Number, Number>();
+	XYChart.Series<Number, Number> mainSeries = new XYChart.Series<Number, Number>();
+	static double progressSize = 0;
+	static double progressCounter = 0;
 	static double progress = 0;
+
 	private void createSeries_Type_2(DataList refDataList) {
-		double size = refDataList.getListType_2().size();
-		double counter = 0;
-		mainSeries = new XYChart.Series<Number, Number>();
-		mainSeries.setName(refDataList.getFileTitle());
+		progressSize += refDataList.getListType_2().size();
+		XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
+		series = new XYChart.Series<Number, Number>();
+		series.setName(refDataList.getFileTitle());
 		for (DataType_2 refType_2 : refDataList.getListType_2()) {
-			mainSeries.getData()
+			series.getData()
 					.add(new XYChart.Data<Number, Number>(//
 							refType_2.getTime(), //
 							refType_2.getAverageVol()));
-			progress = counter++/size;
-			System.out.println(progress);
+			System.out.println(progressCounter/progressSize);
+			pbMainProgressBar.setProgress(progressCounter++/progressSize);
 		}
+		mainSeries = series;
+
+		Platform.runLater(new Runnable() {
+			
+			@Override
+			public void run() {
+				chartMainChart.getData().add(mainSeries);				
+			}
+		});
+
 	}
-	
+
 	private boolean isDataExists() {
 		if (dP.getMainList() == null) {
 			showAlertError(msg.getString("<GUITEXT>TitleError"), //
@@ -120,28 +122,28 @@ public class GUIController implements Initializable {
 		}
 	}
 
-	public void actionCalibrationPlot(ActionEvent event) {
+	public void actionCalibrationPlot(ActionEvent event) throws InterruptedException {
 		removeGraph();
 		if (!isDataExists()) {
 			return;
 		}
+		this.printReport();
+		btnCalibrationPlot.setDisable(true);
+		chartMainChart.setCreateSymbols(false); // hide dots
 		if (!dP.getMainList().isEmpty()) {
-			chartMainChart.setCreateSymbols(false); // hide dots
-			
+			// Create a task for a new thread to run.
+			Thread seriesThread;
+			pbMainProgressBar.setProgress(progress);
+
 			for (DataList refDataList : dP.getMainList()) {
-				pbMainProgressBar.setProgress(progress);
+				System.out.println("Enter");
 				Runnable task = () -> {
 					createSeries_Type_2(refDataList);
 				};
-				new Thread(task).start();
-				
-				chartMainChart.getData().add(mainSeries);
-			} // for
-			
-			
-			this.printReport();
-			btnComparisonPlot.setDisable(true);
-			btnCalibrationPlot.setDisable(false);
+				seriesThread = new Thread(task);
+				seriesThread.start();
+			}
+
 		}
 	}
 
@@ -150,6 +152,8 @@ public class GUIController implements Initializable {
 		if (!isDataExists()) {
 			return;
 		}
+		btnComparisonPlot.setDisable(true);
+		btnCalibrationPlot.setDisable(false);
 		if (!dP.getMainList().isEmpty()) {
 			charMainxAxis.setLowerBound(-1);
 			charMainxAxis.setUpperBound(1);
@@ -168,9 +172,6 @@ public class GUIController implements Initializable {
 			} // for
 
 			this.printReport();
-			mainSeries = new XYChart.Series<Number, Number>();
-			btnComparisonPlot.setDisable(true);
-			btnCalibrationPlot.setDisable(false);
 		}
 	}
 
@@ -223,6 +224,8 @@ public class GUIController implements Initializable {
 			this.removeGraph();
 			btnCalculateConcentration.setDisable(true);
 			btnCalibrationPlot.setDisable(true);
+			btnCalibrationPlot.setDisable(true);
+			btnClearData.setDisable(true);
 			main.executeStateMachine();
 			printReport();
 		}
