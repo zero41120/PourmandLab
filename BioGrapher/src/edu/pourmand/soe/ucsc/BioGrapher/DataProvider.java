@@ -3,13 +3,11 @@ package edu.pourmand.soe.ucsc.BioGrapher;
 import java.io.File;
 import java.util.List;
 
-import org.w3c.dom.css.Counter;
-
 class DataProvider {
 
 	public static DataProvider dP = new DataProvider();
 	private static DataAnalyzer dA = new DataAnalyzer();
-	private List<DataList> mainList = null;
+	private List<DataListCollection> mainList = null;
 
 	private List<File> workingFiles = null;
 	private String currentType = null;
@@ -120,7 +118,7 @@ class DataProvider {
 		if (getMainList() != null) {
 			int counterT1 = 0;
 			int counterT2 = 0;
-			for (DataList dataList : mainList) {
+			for (DataListCollection dataList : mainList) {
 				if (dataList.getListType_1() != null) {
 					counterT1 += dataList.getListType_1().size();
 				}
@@ -205,11 +203,11 @@ class DataProvider {
 		this.workingFiles = workingFiles;
 	}
 
-	protected List<DataList> getMainList() {
+	protected List<DataListCollection> getMainList() {
 		return mainList;
 	}
 
-	protected void setMainList(List<DataList> mainList) {
+	protected void setMainList(List<DataListCollection> mainList) {
 		this.mainList = mainList;
 	}
 

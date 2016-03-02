@@ -12,6 +12,9 @@
 package edu.pourmand.soe.ucsc.BioGrapher;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.application.Application;
 import javafx.stage.Stage;
 import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
@@ -138,7 +141,7 @@ public class Main extends Application {
 				dP.extractVariable(myFile);
 				if (dP.isValidVariable()) {
 					// Good signature, good data.
-					fM.savePath(myFile);
+					fM.savePath(myFile); // TODO save the concentration as well.
 					out.print(msg.getString("<Notice>DataVariable"));
 					out.println("(" + dP.getCurrentType() + ")");
 					out.print(msg.getString("<Notice>FileRemaining"));
@@ -165,11 +168,16 @@ public class Main extends Application {
 
 				/*
 				 * Stage 5:
-				 * All files are loaded.
+				 * All files are loaded. Prompt the user to enter concentration for each file.
 				 * If we load from previous stage, 
 				 * we will graph them automatically.
 				 * Goto DISPLAYING state.
 				 */
+
+				GUIController.showAlertConcentration(//
+						msg.getString("<GUITEXT>TitleConcentration"), //
+						msg.getString("<GUITEXT>HeaderConcentration"), //
+						msg.getString("<GUITEXT>ContentConcentration"));
 				if (sM.isAlertLoadPathConfirmed) {
 					sM.isAlertClearDataComirmed = false;
 				}
@@ -190,6 +198,10 @@ public class Main extends Application {
 			{
 				out.print("\n---MainScreen---\n");
 				out.println(dP.getReport());
+				List<String> someString = new ArrayList<>();
+				for (Integer i = 0; i < 5; i++) {
+					someString.add(i.toString());
+				}
 
 				if (sM.isAlertClearDataComirmed) {
 					dP.resetProviderAndKeepData(false);

@@ -2,8 +2,9 @@ package edu.pourmand.soe.ucsc.BioGrapher;
 
 import java.util.List;
 
-public class DataList{
+public class DataListCollection{
 	private String fileTitle;
+	private Double concentration;
 	private List<DataType_1> listType_1;
 	private List<DataType_2> listType_2;
 	
@@ -24,6 +25,12 @@ public class DataList{
 	}
 	public void setListType_2(List<DataType_2> listType_2) {
 		this.listType_2 = listType_2;
+	}
+	public Double getConcentration() {
+		return concentration;
+	}
+	public void setConcentration(Double concentration) {
+		this.concentration = concentration;
 	}
 }
 

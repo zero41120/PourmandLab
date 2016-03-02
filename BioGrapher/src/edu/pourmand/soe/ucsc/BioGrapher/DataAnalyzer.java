@@ -56,8 +56,8 @@ public class DataAnalyzer {
 	 */
 	protected DataProvider extractVariableFromFile(String dataType, File refFile) {
 		DataProvider returnData = new DataProvider();
-		List<DataList> myListOfDataList = new ArrayList<>();
-		DataList dataList = new DataList();
+		List<DataListCollection> myListOfDataList = new ArrayList<>();
+		DataListCollection dataList = new DataListCollection();
 		dataList.setFileTitle(refFile.getName());
 		
 		switch (dataType) {

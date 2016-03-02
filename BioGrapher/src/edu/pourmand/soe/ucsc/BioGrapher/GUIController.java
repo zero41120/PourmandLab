@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
@@ -12,8 +13,11 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -24,9 +28,15 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.StringTokenizer;
+
+import javax.swing.ListModel;
+import javax.swing.text.DefaultEditorKit.CopyAction;
 
 import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
 import static edu.pourmand.soe.ucsc.BioGrapher.DataProvider.dP;
@@ -39,6 +49,7 @@ import static java.lang.System.out;
 
 public class GUIController implements Initializable {
 	// @formatter:off
+	@FXML Button btnEdit;
 	@FXML Button btnBrowse;
 	@FXML Button btnClearData;
 	@FXML Button btnCalibrationPlot;
@@ -59,8 +70,7 @@ public class GUIController implements Initializable {
 	static double progressSize = 0;
 	static double progressCounter = 0;
 
-
-	private void createSeries_Type_1(DataList refDataList) {
+	private void createSeries_Type_1(DataListCollection refDataList) {
 		if (refDataList.getListType_1() == null) {
 			return;
 		}
@@ -76,8 +86,8 @@ public class GUIController implements Initializable {
 		};
 		Platform.runLater(addData);
 	}
-	
-	private void createSeries_Type_2(DataList refDataList) {
+
+	private void createSeries_Type_2(DataListCollection refDataList) {
 		if (refDataList.getListType_2() == null) {
 			return;
 		}
@@ -116,11 +126,10 @@ public class GUIController implements Initializable {
 	public void actionReloadStatus() {
 		printReport();
 		if (dP.getMainList() != null) {
-			if (btnClearData.isDisable() && // ) {
-					btnCalibrationPlot.isDisable() && //
-					btnComparisonPlot.isDisable()) {
-				btnClearData.setDisable(false);
-				for (DataList refDataList : dP.getMainList()) {
+			btnClearData.setDisable(false);
+			btnEdit.setDisable(false);
+			if (btnCalibrationPlot.isDisable() && btnComparisonPlot.isDisable()) {
+				for (DataListCollection refDataList : dP.getMainList()) {
 					if (refDataList.getListType_1() != null) {
 						btnComparisonPlot.setDisable(false);
 					}
@@ -144,7 +153,7 @@ public class GUIController implements Initializable {
 		progressCounter = 0;
 		progressSize = 0;
 		if (!dP.getMainList().isEmpty()) {
-			for (DataList refDataList : dP.getMainList()) {
+			for (DataListCollection refDataList : dP.getMainList()) {
 				Runnable task = () -> {
 					createSeries_Type_2(refDataList);
 				};
@@ -168,7 +177,7 @@ public class GUIController implements Initializable {
 		charMainxAxis.setLowerBound(-1);
 		charMainxAxis.setUpperBound(1);
 		if (!dP.getMainList().isEmpty()) {
-			for (DataList refDataList : dP.getMainList()) {
+			for (DataListCollection refDataList : dP.getMainList()) {
 				createSeries_Type_1(refDataList);
 				/*
 				series = new XYChart.Series<Number, Number>();
@@ -181,13 +190,13 @@ public class GUIController implements Initializable {
 				series.setName(refDataList.getFileTitle());
 				chartMainChart.getData().add(series);
 				*/
-			} 
+			}
 
 		}
 	}
 
 	public void actionCalculateConcentration() {
-		// TODO Linear aggression? 
+		// TODO Linear aggression?
 	}
 
 	private void printReport() {
@@ -197,6 +206,13 @@ public class GUIController implements Initializable {
 		Text message = new Text(dP.getReport());
 		message.setFont(Font.font("System", 13));
 		txfwReport.getChildren().add(message);
+	}
+
+	public void actionEdit(ActionEvent event) {
+		GUIController.showAlertConcentration(//
+				msg.getString("<GUITEXT>TitleConcentration"), //
+				msg.getString("<GUITEXT>HeaderConcentration"), //
+				msg.getString("<GUITEXT>ContentConcentration"));
 	}
 
 	/**
@@ -211,12 +227,13 @@ public class GUIController implements Initializable {
 		if (fileList != null) {
 			removeGraph();
 			btnClearData.setDisable(false);
+			btnEdit.setDisable(false);
 			dP.setWorkingFiles(fileList);
 			sM.isDataInputted = true;
 			sM.currentState = States.CALIBRATING;
 			main.executeStateMachine();
 		}
-		for (DataList refDataList : dP.getMainList()) {
+		for (DataListCollection refDataList : dP.getMainList()) {
 			if (refDataList.getListType_1() != null) {
 				btnComparisonPlot.setDisable(false);
 			}
@@ -239,13 +256,82 @@ public class GUIController implements Initializable {
 		sM.isAlertClearDataComirmed = isConfirmed;
 		if (isConfirmed) {
 			this.removeGraph();
+			pbMainProgressBar.setProgress(0);
 			btnCalculateConcentration.setDisable(true);
 			btnCalibrationPlot.setDisable(true);
 			btnComparisonPlot.setDisable(true);
 			btnClearData.setDisable(true);
+			btnEdit.setDisable(true);
 			main.executeStateMachine();
 			printReport();
 		}
+	}
+
+	public static void showAlertConcentration(String aTitle, String aHeader, String aContent) {
+		// Create the custom dialog.
+		Dialog<List<Double>> dialog = new Dialog<>();
+		dialog.setTitle(aTitle);
+		dialog.setHeaderText(aHeader);
+
+		// Set the button types.
+		ButtonType customButtonType = new ButtonType("Assign", ButtonData.OK_DONE);
+		dialog.getDialogPane().getButtonTypes().addAll(customButtonType, ButtonType.CANCEL);
+		Node assignButton = dialog.getDialogPane().lookupButton(customButtonType);
+		Boolean[] agreement = new Boolean[dP.getMainList().size()];
+		for (int i = 0; i < agreement.length; i++) {
+			agreement[i] = false;
+		}
+		assignButton.setDisable(Arrays.asList(agreement).contains(false));
+
+		// Create the text fields.
+		VBox cols = new VBox(11);
+		NumberTextField[] concentrationInputField = new NumberTextField[dP.getMainList().size()];
+
+		// Set the text fields with names from DataProvider
+		for (int i = 0; i < dP.getMainList().size(); i++) {
+			final int copy = i;
+			concentrationInputField[i] = new NumberTextField();
+			concentrationInputField[i].setPromptText(dP.getMainList().get(i).getFileTitle());
+			if (dP.getMainList().get(i).getConcentration() != null) {
+				concentrationInputField[i].setText(dP.getMainList().get(i).getConcentration().toString());
+				agreement[i] = true;
+			}
+			concentrationInputField[i].textProperty().addListener((observable, oldValue, newValue) -> {
+				agreement[copy] = !newValue.trim().isEmpty();
+				assignButton.setDisable(Arrays.asList(agreement).contains(false));
+			});
+			cols.getChildren().add(new Label(dP.getMainList().get(i).getFileTitle()));
+			cols.getChildren().add(concentrationInputField[i]);
+		}
+
+		dialog.getDialogPane().setContent(cols);
+
+		// When Assign button is clicked
+		dialog.setResultConverter(dialogButton -> {
+			if (dialogButton == customButtonType) {
+
+				for (int i = 0; i < dP.getMainList().size(); i++) {
+					Double concentration = Double.parseDouble(concentrationInputField[i].getText());
+					dP.getMainList().get(i).setConcentration(concentration);
+				}
+
+				// Convert the result to a list for console.
+				List<Double> returnConcentration = new ArrayList<>();
+				for (TextField textField : concentrationInputField) {
+					returnConcentration.add(Double.parseDouble(textField.getText()));
+				}
+				return returnConcentration;
+			}			
+			return null;
+		});
+
+		Optional<List<Double>> result = dialog.showAndWait();
+
+		result.ifPresent(refList -> {
+			for (Double myDouble : refList) {
+				System.out.println(myDouble);
+			}
+		});
 	}
 
 	/**
@@ -351,9 +437,44 @@ public class GUIController implements Initializable {
 		btnComparisonPlot.setText(msg.getString("<GUITEXT>ButtonComparision"));
 		btnClearData.setText(msg.getString("<GUITEXT>ButtonClearData"));
 		btnBrowse.setText(msg.getString("<GUITEXT>ButtonBrowse"));
+		btnEdit.setText(msg.getString("<GUITEXT>ButtonEdit"));
 		btnCalibrationPlot.setDisable(true);
 		btnComparisonPlot.setDisable(true);
 		btnClearData.setDisable(true);
+		btnEdit.setDisable(true);
 	}
 
+}
+
+class NumberTextField extends TextField {
+	// Source from: http://goo.gl/FKZKKr
+
+	@Override
+	public void replaceText(int start, int end, String text) {
+		if (validate(text)) {
+			super.replaceText(start, end, text);
+		}
+	}
+
+	@Override
+	public void replaceSelection(String text) {
+		if (validate(text)) {
+			super.replaceSelection(text);
+		}
+	}
+
+	private boolean validate(String text) {
+
+		if (text.equals(".")) {
+			int counter = 0;
+			for (int i = 0; i < this.getText().length(); i++) {
+				counter += this.getText().charAt(i) == '.' ? 1 : 0;
+				if (counter == 1) {
+					return false;
+				}
+			}
+		}
+		return text.matches("[0-9.]*");
+
+	}
 }
