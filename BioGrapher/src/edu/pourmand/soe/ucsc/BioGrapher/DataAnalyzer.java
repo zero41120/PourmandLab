@@ -11,7 +11,6 @@ import java.util.StringTokenizer;
 import edu.pourmand.soe.ucsc.BioGrapher.DataFileManager;
 import edu.pourmand.soe.ucsc.BioGrapher.DataProvider;
 import edu.pourmand.soe.ucsc.BioGrapher.DataType_1;
-import javafx.util.Pair;
 
 public class DataAnalyzer {
 
@@ -126,7 +125,11 @@ public class DataAnalyzer {
 				File myFile = myManager.openFile(stk.nextToken(":"));
 				if (myFile != null) {
 					myFiles.add(myFile);
-					myConcentration.add(Double.parseDouble(stk.nextToken()));
+					try {
+						myConcentration.add(Double.parseDouble(stk.nextToken()));
+					} catch (Exception e) {
+						myConcentration.add(new Double(0));
+					}
 				}
 			}
 			myFC.setMyFile(myFiles);

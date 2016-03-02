@@ -54,6 +54,7 @@ class DataProvider {
 	protected void resetProviderAndKeepData(boolean isKeepingData) {
 		workingFiles = null;
 		currentType = null;
+		workingConcentration = null;
 		pathCounter = 0;
 		isVariableValid = false;
 		if (!isKeepingData) {

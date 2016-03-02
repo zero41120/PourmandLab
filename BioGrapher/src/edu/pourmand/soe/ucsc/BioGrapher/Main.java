@@ -180,7 +180,7 @@ public class Main extends Application {
 				if (sM.isAlertLoadPathConfirmed) {
 					sM.isAlertClearDataComirmed = false;
 				}
-				fM.savePath(dP); 
+   				fM.savePath(dP); 
 				sM.isDataInputted = false;
 				sM.currentState = States.DISPLAYING;
 				dP.resetProviderAndKeepData(true);

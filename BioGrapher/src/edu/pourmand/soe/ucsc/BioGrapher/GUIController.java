@@ -15,6 +15,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -270,15 +271,19 @@ public class GUIController implements Initializable {
 		dialog.setHeaderText(aHeader);
 
 		// Set the button types.
-		ButtonType customButtonType = new ButtonType("Assign", ButtonData.OK_DONE);
-		dialog.getDialogPane().getButtonTypes().addAll(customButtonType, ButtonType.CANCEL);
-		Node assignButton = dialog.getDialogPane().lookupButton(customButtonType);
+		ButtonType assignType = new ButtonType("Assign", ButtonData.OK_DONE);
+		ButtonType cancelType = new ButtonType("Cancel", ButtonData.CANCEL_CLOSE);
+		dialog.getDialogPane().getButtonTypes().addAll(assignType, cancelType);
+		Node btnAssign = dialog.getDialogPane().lookupButton(assignType);
+		Node btnCancel = dialog.getDialogPane().lookupButton(cancelType);
+		
 		Boolean[] agreement = new Boolean[dP.getDataCollection().size()];
 		Arrays.fill(agreement, Boolean.FALSE);
-		assignButton.setDisable(true);
+		btnAssign.setDisable(true);
 
 		// Create the text fields.
-		VBox cols = new VBox(11);
+		HBox rows = new HBox();
+		VBox cols = new VBox();
 		NumberTextField[] concentrationInputField = new NumberTextField[dP.getDataCollection().size()];
 
 		// Set the text fields with names from DataProvider
@@ -295,18 +300,20 @@ public class GUIController implements Initializable {
 			}
 			concentrationInputField[i].textProperty().addListener((observable, oldValue, newValue) -> {
 				agreement[copy] = !newValue.trim().isEmpty();
-				assignButton.setDisable(Arrays.asList(agreement).contains(false));
+				btnAssign.setDisable(Arrays.asList(agreement).contains(false));
 			});
-			cols.getChildren().add(new Label(dP.getDataCollection().get(i).getFileTitle()));
-			cols.getChildren().add(concentrationInputField[i]);
+			rows = new HBox();
+			rows.getChildren().add(concentrationInputField[i]);
+			rows.getChildren().add(new Label(dP.getDataCollection().get(i).getFileTitle()));
+			cols.getChildren().add(rows);
 		}
 		
-		assignButton.setDisable(Arrays.asList(agreement).contains(false));
+		btnAssign.setDisable(Arrays.asList(agreement).contains(false));
 		dialog.getDialogPane().setContent(cols);
 
 		// When Assign button is clicked
 		dialog.setResultConverter(dialogButton -> {
-			if (dialogButton == customButtonType) {
+			if (dialogButton == assignType) {
 
 				for (int i = 0; i < dP.getDataCollection().size(); i++) {
 					Double concentration = Double.parseDouble(concentrationInputField[i].getText());
@@ -319,6 +326,16 @@ public class GUIController implements Initializable {
 					returnConcentration.add(Double.parseDouble(textField.getText()));
 				}
 				return returnConcentration;
+			} else if (dialogButton == cancelType){
+				for (int i = 0; i < dP.getDataCollection().size(); i++) {
+					Double concentration;
+					try {
+						concentration = Double.parseDouble(concentrationInputField[i].getText());
+					} catch (Exception e) {
+						concentration = 0.0;
+					}
+					dP.getDataCollection().get(i).setConcentration(concentration);
+				}
 			}
 			return null;
 		});

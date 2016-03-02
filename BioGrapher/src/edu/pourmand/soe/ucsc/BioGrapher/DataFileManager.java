@@ -83,6 +83,9 @@ public class DataFileManager {
 	protected void savePath(DataProvider tP) throws Exception {
 		if (!checkPathFile()) {
 			createPathFile();
+		} else {
+			deletePathFile();
+			createPathFile();
 		}
 		FileWriter writeFile = new FileWriter("./BioTemp.bgt", true);
 		PrintWriter writerPrint = new PrintWriter(writeFile);
