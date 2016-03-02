@@ -10,6 +10,7 @@ class DataProvider {
 	private List<DataListCollection> mainList = null;
 
 	private List<File> workingFiles = null;
+	private List<Double> workingConcentration = null;
 	private String currentType = null;
 	private Integer pathCounter = 0;
 	private boolean isVariableValid = false;
@@ -83,12 +84,16 @@ class DataProvider {
 				dP.setPathCounter(tP.getPathCounter());
 
 			// Append DataList from tP to dP.
-			if (tP.getMainList() != null) {
-				if (dP.getMainList() == null) {
-					dP.setMainList(tP.getMainList());
+			if (tP.getDataCollection() != null) {
+				if (dP.getDataCollection() == null) {
+					dP.setMainList(tP.getDataCollection());
 				} else {
-					dP.getMainList().addAll(tP.getMainList());
+					dP.getDataCollection().addAll(tP.getDataCollection());
 				}
+			}
+			
+			if (tP.getWorkingConcentration() != null) {
+					dP.setWorkingConcentration(tP.getWorkingConcentration());
 			}
 
 			/* 
@@ -114,8 +119,8 @@ class DataProvider {
 	 */
 	public String getReport() {
 		StringBuffer reportMessage = new StringBuffer("DataProvider report:\n");
-		String message = this.getMainList() == null ? "N/A\n" : "Provider- Size:" + getMainList().size();
-		if (getMainList() != null) {
+		String message = this.getDataCollection() == null ? "N/A\n" : "Provider- Size:" + getDataCollection().size();
+		if (getDataCollection() != null) {
 			int counterT1 = 0;
 			int counterT2 = 0;
 			for (DataListCollection dataList : mainList) {
@@ -203,12 +208,20 @@ class DataProvider {
 		this.workingFiles = workingFiles;
 	}
 
-	protected List<DataListCollection> getMainList() {
+	protected List<DataListCollection> getDataCollection() {
 		return mainList;
 	}
 
 	protected void setMainList(List<DataListCollection> mainList) {
 		this.mainList = mainList;
+	}
+
+	public List<Double> getWorkingConcentration() {
+		return workingConcentration;
+	}
+
+	public void setWorkingConcentration(List<Double> workingConcentration) {
+		this.workingConcentration = workingConcentration;
 	}
 
 }

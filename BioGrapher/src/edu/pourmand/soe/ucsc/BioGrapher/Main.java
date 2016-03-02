@@ -141,7 +141,6 @@ public class Main extends Application {
 				dP.extractVariable(myFile);
 				if (dP.isValidVariable()) {
 					// Good signature, good data.
-					fM.savePath(myFile); // TODO save the concentration as well.
 					out.print(msg.getString("<Notice>DataVariable"));
 					out.println("(" + dP.getCurrentType() + ")");
 					out.print(msg.getString("<Notice>FileRemaining"));
@@ -181,6 +180,7 @@ public class Main extends Application {
 				if (sM.isAlertLoadPathConfirmed) {
 					sM.isAlertClearDataComirmed = false;
 				}
+				fM.savePath(dP); 
 				sM.isDataInputted = false;
 				sM.currentState = States.DISPLAYING;
 				dP.resetProviderAndKeepData(true);

@@ -80,20 +80,23 @@ public class DataFileManager {
 	 * @param refPath
 	 *            The file to get path from.
 	 */
-	protected void savePath(File refPath) throws Exception {
+	protected void savePath(DataProvider tP) throws Exception {
 		if (!checkPathFile()) {
 			createPathFile();
 		}
 		FileWriter writeFile = new FileWriter("./BioTemp.bgt", true);
 		PrintWriter writerPrint = new PrintWriter(writeFile);
-		writerPrint.println(refPath.getPath());
-		writerPrint.flush();
 		System.out.print(msg.getString("<Notice>OldPathSave"));
-		System.out.println(": " + refPath.getPath());
-		if (refPath.getPath() == "./BioTemp.bgt") {
+		for (DataListCollection dC : tP.getDataCollection()) {
+			writerPrint.println(dC.getFilePath() +":"+ dC.getConcentration());
+			System.out.println(dC.getFilePath() +":"+ dC.getConcentration());
+
+		}
+		writerPrint.flush();
+		/*if (refPath.getPath() == "./BioTemp.bgt") {
 			deletePathFile();
 			System.out.println("Delete duplicate");
-		}
+		}*/
 		writerPrint.close();
 	}
 

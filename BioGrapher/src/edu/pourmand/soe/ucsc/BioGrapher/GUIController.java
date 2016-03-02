@@ -15,7 +15,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -30,13 +29,10 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.StringTokenizer;
-
-import javax.swing.ListModel;
-import javax.swing.text.DefaultEditorKit.CopyAction;
 
 import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
 import static edu.pourmand.soe.ucsc.BioGrapher.DataProvider.dP;
@@ -105,7 +101,7 @@ public class GUIController implements Initializable {
 	}
 
 	private boolean isDataExists() {
-		if (dP.getMainList() == null) {
+		if (dP.getDataCollection() == null) {
 			showAlertError(msg.getString("<GUITEXT>TitleError"), //
 					msg.getString("<GUITEXT>HeaderError"), //
 					msg.getString("<GUITEXT>ContentError_NoDataFound"), //
@@ -125,11 +121,11 @@ public class GUIController implements Initializable {
 
 	public void actionReloadStatus() {
 		printReport();
-		if (dP.getMainList() != null) {
+		if (dP.getDataCollection() != null) {
 			btnClearData.setDisable(false);
 			btnEdit.setDisable(false);
 			if (btnCalibrationPlot.isDisable() && btnComparisonPlot.isDisable()) {
-				for (DataListCollection refDataList : dP.getMainList()) {
+				for (DataListCollection refDataList : dP.getDataCollection()) {
 					if (refDataList.getListType_1() != null) {
 						btnComparisonPlot.setDisable(false);
 					}
@@ -152,8 +148,8 @@ public class GUIController implements Initializable {
 		pbMainProgressBar.setProgress(0);
 		progressCounter = 0;
 		progressSize = 0;
-		if (!dP.getMainList().isEmpty()) {
-			for (DataListCollection refDataList : dP.getMainList()) {
+		if (!dP.getDataCollection().isEmpty()) {
+			for (DataListCollection refDataList : dP.getDataCollection()) {
 				Runnable task = () -> {
 					createSeries_Type_2(refDataList);
 				};
@@ -176,8 +172,8 @@ public class GUIController implements Initializable {
 		progressSize = 0;
 		charMainxAxis.setLowerBound(-1);
 		charMainxAxis.setUpperBound(1);
-		if (!dP.getMainList().isEmpty()) {
-			for (DataListCollection refDataList : dP.getMainList()) {
+		if (!dP.getDataCollection().isEmpty()) {
+			for (DataListCollection refDataList : dP.getDataCollection()) {
 				createSeries_Type_1(refDataList);
 				/*
 				series = new XYChart.Series<Number, Number>();
@@ -233,7 +229,7 @@ public class GUIController implements Initializable {
 			sM.currentState = States.CALIBRATING;
 			main.executeStateMachine();
 		}
-		for (DataListCollection refDataList : dP.getMainList()) {
+		for (DataListCollection refDataList : dP.getDataCollection()) {
 			if (refDataList.getListType_1() != null) {
 				btnComparisonPlot.setDisable(false);
 			}
@@ -277,42 +273,44 @@ public class GUIController implements Initializable {
 		ButtonType customButtonType = new ButtonType("Assign", ButtonData.OK_DONE);
 		dialog.getDialogPane().getButtonTypes().addAll(customButtonType, ButtonType.CANCEL);
 		Node assignButton = dialog.getDialogPane().lookupButton(customButtonType);
-		Boolean[] agreement = new Boolean[dP.getMainList().size()];
-		for (int i = 0; i < agreement.length; i++) {
-			agreement[i] = false;
-		}
-		assignButton.setDisable(Arrays.asList(agreement).contains(false));
+		Boolean[] agreement = new Boolean[dP.getDataCollection().size()];
+		Arrays.fill(agreement, Boolean.FALSE);
+		assignButton.setDisable(true);
 
 		// Create the text fields.
 		VBox cols = new VBox(11);
-		NumberTextField[] concentrationInputField = new NumberTextField[dP.getMainList().size()];
+		NumberTextField[] concentrationInputField = new NumberTextField[dP.getDataCollection().size()];
 
 		// Set the text fields with names from DataProvider
-		for (int i = 0; i < dP.getMainList().size(); i++) {
+		for (int i = 0; i < dP.getDataCollection().size(); i++) {
 			final int copy = i;
 			concentrationInputField[i] = new NumberTextField();
-			concentrationInputField[i].setPromptText(dP.getMainList().get(i).getFileTitle());
-			if (dP.getMainList().get(i).getConcentration() != null) {
-				concentrationInputField[i].setText(dP.getMainList().get(i).getConcentration().toString());
+			concentrationInputField[i].setPromptText(dP.getDataCollection().get(i).getFileTitle());
+			if (dP.getWorkingConcentration() != null) {
+				concentrationInputField[i].setText(dP.getWorkingConcentration().get(i).toString());
+				agreement[i] = true;
+			} else if (dP.getDataCollection().get(i).getConcentration() != null) {
+				concentrationInputField[i].setText(dP.getDataCollection().get(i).getConcentration().toString());
 				agreement[i] = true;
 			}
 			concentrationInputField[i].textProperty().addListener((observable, oldValue, newValue) -> {
 				agreement[copy] = !newValue.trim().isEmpty();
 				assignButton.setDisable(Arrays.asList(agreement).contains(false));
 			});
-			cols.getChildren().add(new Label(dP.getMainList().get(i).getFileTitle()));
+			cols.getChildren().add(new Label(dP.getDataCollection().get(i).getFileTitle()));
 			cols.getChildren().add(concentrationInputField[i]);
 		}
-
+		
+		assignButton.setDisable(Arrays.asList(agreement).contains(false));
 		dialog.getDialogPane().setContent(cols);
 
 		// When Assign button is clicked
 		dialog.setResultConverter(dialogButton -> {
 			if (dialogButton == customButtonType) {
 
-				for (int i = 0; i < dP.getMainList().size(); i++) {
+				for (int i = 0; i < dP.getDataCollection().size(); i++) {
 					Double concentration = Double.parseDouble(concentrationInputField[i].getText());
-					dP.getMainList().get(i).setConcentration(concentration);
+					dP.getDataCollection().get(i).setConcentration(concentration);
 				}
 
 				// Convert the result to a list for console.
@@ -321,7 +319,7 @@ public class GUIController implements Initializable {
 					returnConcentration.add(Double.parseDouble(textField.getText()));
 				}
 				return returnConcentration;
-			}			
+			}
 			return null;
 		});
 

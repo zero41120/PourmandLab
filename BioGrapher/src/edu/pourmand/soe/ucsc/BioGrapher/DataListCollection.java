@@ -4,6 +4,7 @@ import java.util.List;
 
 public class DataListCollection{
 	private String fileTitle;
+	private String filePath;
 	private Double concentration;
 	private List<DataType_1> listType_1;
 	private List<DataType_2> listType_2;
@@ -31,6 +32,12 @@ public class DataListCollection{
 	}
 	public void setConcentration(Double concentration) {
 		this.concentration = concentration;
+	}
+	public String getFilePath() {
+		return filePath;
+	}
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
 	}
 }
 

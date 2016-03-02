@@ -11,6 +11,7 @@ import java.util.StringTokenizer;
 import edu.pourmand.soe.ucsc.BioGrapher.DataFileManager;
 import edu.pourmand.soe.ucsc.BioGrapher.DataProvider;
 import edu.pourmand.soe.ucsc.BioGrapher.DataType_1;
+import javafx.util.Pair;
 
 public class DataAnalyzer {
 
@@ -55,8 +56,8 @@ public class DataAnalyzer {
 	 *         this object.
 	 */
 	protected DataProvider extractVariableFromFile(String dataType, File refFile) {
-		DataProvider returnData = new DataProvider();
-		List<DataListCollection> myListOfDataList = new ArrayList<>();
+		DataProvider tempProvider = new DataProvider();
+		List<DataListCollection> myDataListCollections = new ArrayList<>();
 		DataListCollection dataList = new DataListCollection();
 		dataList.setFileTitle(refFile.getName());
 		
@@ -65,19 +66,24 @@ public class DataAnalyzer {
 			DataType_1 pivot1 = searchDataType_1_Pivot(refFile);
 			List<DataType_1> myDataArray_1 = createDataType_1_Array(refFile, pivot1);
 			dataList.setListType_1(myDataArray_1);
-			myListOfDataList.add(dataList);
-			returnData.setMainList(myListOfDataList);
-			return returnData;
+			dataList.setFilePath(refFile.getAbsolutePath());
+			myDataListCollections.add(dataList);
+			tempProvider.setMainList(myDataListCollections);
+			return tempProvider;
 		case "Type2":
 			List<DataType_2> myDataArray_2 = createDataType_2_Array(refFile);
 			dataList.setListType_2(myDataArray_2);
-			myListOfDataList.add(dataList);
-			returnData.setMainList(myListOfDataList);			
-			return returnData;
+			dataList.setFilePath(refFile.getAbsolutePath());
+			myDataListCollections.add(dataList);
+			tempProvider.setMainList(myDataListCollections);			
+			return tempProvider;
 
 		case "PathType":
-			returnData.setWorkingFiles(this.getFilesFromPathFile(refFile));
-			return returnData;
+			
+			FileConcetrationList myFC = this.getFilesFromPathFile(refFile);
+			tempProvider.setWorkingFiles(myFC.getMyFiles());
+			tempProvider.setWorkingConcentration(myFC.getMyConcentration());
+			return tempProvider;
 		default:
 			// File is not a valid type, ask user to re-enter file.
 			break;
@@ -104,25 +110,32 @@ public class DataAnalyzer {
 	 *            PathFile that contains the paths from previous operation.
 	 * @return A list of string object of all paths.
 	 */
-	private List<File> getFilesFromPathFile(File pathFile) {
+	private 	FileConcetrationList getFilesFromPathFile(File pathFile) {
 
 		DataFileManager myManager = new DataFileManager();
-		List<File> myFilePaths = new ArrayList<>();
+		FileConcetrationList myFC = new FileConcetrationList();
+		List<Double> myConcentration = new ArrayList<>();
+		List<File> myFiles = new ArrayList<>();
 
 		try (FileInputStream readFile = new FileInputStream(pathFile);
 				InputStreamReader readIn = new InputStreamReader(readFile, "UTF8")) {
 			BufferedReader ReadBuffer = new BufferedReader(readIn);
 			String line = "";
 			while ((line = ReadBuffer.readLine()) != null) {
-				File myFile = myManager.openFile(line);
+				StringTokenizer stk = new StringTokenizer(line);
+				File myFile = myManager.openFile(stk.nextToken(":"));
 				if (myFile != null) {
-					myFilePaths.add(myFile);
+					myFiles.add(myFile);
+					myConcentration.add(Double.parseDouble(stk.nextToken()));
 				}
 			}
+			myFC.setMyFile(myFiles);
+			myFC.setMyConcentration(myConcentration);
 		} catch (Exception e) {
 			System.out.println(e);
 		}
-		return myFilePaths;
+		
+		return myFC;
 	}
 
 	/**
@@ -284,4 +297,22 @@ public class DataAnalyzer {
 		return temp;
 	}
 
+}
+
+class FileConcetrationList{
+	private List<File> myFile = null;
+	private List<Double> myConcentration = null;
+	public List<File> getMyFiles() {
+		return myFile;
+	}
+	public void setMyFile(List<File> myFile) {
+		this.myFile = myFile;
+	}
+	public List<Double> getMyConcentration() {
+		return myConcentration;
+	}
+	public void setMyConcentration(List<Double> myConcentration) {
+		this.myConcentration = myConcentration;
+	}
+	
 }
