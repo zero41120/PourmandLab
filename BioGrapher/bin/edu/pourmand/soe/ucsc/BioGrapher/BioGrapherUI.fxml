@@ -43,14 +43,18 @@
                </children></AnchorPane>
          </items>
       </ToolBar>
-      <LineChart fx:id="chartMainChart">
-        <xAxis>
-          <NumberAxis fx:id="charMainxAxis" side="BOTTOM" />
-        </xAxis>
-        <yAxis>
-          <NumberAxis fx:id="charMainyAxis" side="LEFT" />
-        </yAxis>
-      </LineChart>
+      <Pane fx:id="paneLineChartPane">
+         <children>
+            <LineChart fx:id="chartMainChart" animated="false" prefHeight="400.0" prefWidth="800.0">
+              <xAxis>
+                <NumberAxis fx:id="charMainxAxis" side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis fx:id="charMainyAxis" side="LEFT" />
+              </yAxis>
+            </LineChart>
+         </children>
+      </Pane>
       <HBox>
          <children>
             <TitledPane animated="false" text="Concetration">

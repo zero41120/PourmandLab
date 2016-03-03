@@ -6,7 +6,7 @@ import java.util.ResourceBundle;
 public class StateMachine {
 	public enum States
 	{
-		BEGINNING, CALIBRATING, DISPLAYING;
+		BEGINNING, CALIBRATING, SAVING, DISPLAYING;
 	}
 
 	States	currentState;

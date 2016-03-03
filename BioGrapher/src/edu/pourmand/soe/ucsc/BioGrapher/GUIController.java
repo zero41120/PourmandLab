@@ -1,22 +1,31 @@
 package edu.pourmand.soe.ucsc.BioGrapher;
 
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Bounds;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.chart.XYChart.Data;
+import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -28,9 +37,9 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -62,6 +71,7 @@ public class GUIController implements Initializable {
 	@FXML NumberAxis charMainyAxis;
 	@FXML ProgressBar pbMainProgressBar;
 	@FXML LineChart<Number, Number> chartMainChart;
+	@FXML Pane paneLineChartPane;
 	// @formatter:on
 
 	static double progressSize = 0;
@@ -84,21 +94,37 @@ public class GUIController implements Initializable {
 		Platform.runLater(addData);
 	}
 
-	private void createSeries_Type_2(DataListCollection refDataList) {
-		if (refDataList.getListType_2() == null) {
+	private void createSeries_Type_2(DataListCollection refCollection) {
+		if (refCollection.getListType_2() == null) {
 			return;
 		}
 		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
-		progressSize += refDataList.getListType_2().size();
-		series.setName(refDataList.getFileTitle());
-		for (DataType_2 refType_2 : refDataList.getListType_2()) {
-			series.getData().add(new XYChart.Data<Number, Number>(refType_2.getTime(), refType_2.getAverageVol()));
-			pbMainProgressBar.setProgress(progressCounter++ / progressSize);
+		double sampleSize = 0;
+		double sampleTotal = 0;
+		for (DataType_2 refType_2 : refCollection.getListType_2()) {
+			pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType2());
+			// System.out.println(progressCounter + "/" + dP.getFileSizeType2()
+			// + " = " + pbMainProgressBar.getProgress());
+			if (refType_2.getTime() > 40.0 && refType_2.getTime() < 45) {
+				sampleSize++;
+				sampleTotal += refType_2.getAverageVol();
+			}
 		}
+		Double vols = sampleTotal / sampleSize;
+		System.out.println(vols + " for " + refCollection.getFileTitle());
+		XYChart.Data<Number, Number> myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(), vols);
+		series.getData().add(myData);
+		series.setName(refCollection.getFileTitle() + " : " + new DecimalFormat("##.##").format(vols));
+		Text text = new Text(new DecimalFormat("##.##").format(vols));
+        text.setTranslateY(text.getLayoutBounds().getHeight()/2);
+        myData.setNode(text);
 		Runnable addData = () -> {
 			chartMainChart.getData().add(series);
+			//checkNoData(series);
+			// updateValueMarker(myData);
 		};
 		Platform.runLater(addData);
+
 	}
 
 	private boolean isDataExists() {
@@ -145,11 +171,27 @@ public class GUIController implements Initializable {
 		}
 		this.printReport();
 		btnCalibrationPlot.setDisable(true);
-		chartMainChart.setCreateSymbols(false);
+		chartMainChart.setCreateSymbols(true);
 		pbMainProgressBar.setProgress(0);
+		charMainxAxis.setAutoRanging(false);
+		Double gap = 0.0, avarage = 0.0, max = 0.0, min = Double.MAX_VALUE;
+		for (int i = 1; i < dP.getDataCollection().size(); i++) {
+			Double temp = dP.getDataCollection().get(i).getConcentration();
+			max = temp > max ? temp : max;
+			min = temp < min ? temp : min;
+			Double step = Math.abs(temp - dP.getDataCollection().get(i - 1).getConcentration());
+			gap += step;
+		}
+		avarage = gap / dP.getDataCollection().size();
+		charMainxAxis.setLowerBound(min - avarage / 2);
+		charMainxAxis.setUpperBound(max + avarage / 2);
+		charMainyAxis.setForceZeroInRange(false);
 		progressCounter = 0;
-		progressSize = 0;
 		if (!dP.getDataCollection().isEmpty()) {
+			/*for (DataListCollection refDataList : dP.getDataCollection()) {
+				createSeries_Type_2(refDataList);
+			}*/
+
 			for (DataListCollection refDataList : dP.getDataCollection()) {
 				Runnable task = () -> {
 					createSeries_Type_2(refDataList);
@@ -158,6 +200,12 @@ public class GUIController implements Initializable {
 				seriesThreads.start();
 			}
 		}
+		/*
+		for (Series<Number, Number> s : chartMainChart.getData()) {
+			for (Data<Number, Number> d : s.getData()) {
+				updateValueMarker(d);
+			}
+		}*/
 	}
 
 	public void actionComparisonPlot() {
@@ -276,7 +324,7 @@ public class GUIController implements Initializable {
 		dialog.getDialogPane().getButtonTypes().addAll(assignType, cancelType);
 		Node btnAssign = dialog.getDialogPane().lookupButton(assignType);
 		Node btnCancel = dialog.getDialogPane().lookupButton(cancelType);
-		
+
 		Boolean[] agreement = new Boolean[dP.getDataCollection().size()];
 		Arrays.fill(agreement, Boolean.FALSE);
 		btnAssign.setDisable(true);
@@ -307,26 +355,24 @@ public class GUIController implements Initializable {
 			rows.getChildren().add(new Label(dP.getDataCollection().get(i).getFileTitle()));
 			cols.getChildren().add(rows);
 		}
-		
+
 		btnAssign.setDisable(Arrays.asList(agreement).contains(false));
 		dialog.getDialogPane().setContent(cols);
 
 		// When Assign button is clicked
 		dialog.setResultConverter(dialogButton -> {
 			if (dialogButton == assignType) {
-
 				for (int i = 0; i < dP.getDataCollection().size(); i++) {
 					Double concentration = Double.parseDouble(concentrationInputField[i].getText());
 					dP.getDataCollection().get(i).setConcentration(concentration);
 				}
-
 				// Convert the result to a list for console.
 				List<Double> returnConcentration = new ArrayList<>();
 				for (TextField textField : concentrationInputField) {
 					returnConcentration.add(Double.parseDouble(textField.getText()));
 				}
 				return returnConcentration;
-			} else if (dialogButton == cancelType){
+			} else if (dialogButton == cancelType) {
 				for (int i = 0; i < dP.getDataCollection().size(); i++) {
 					Double concentration;
 					try {
@@ -444,6 +490,48 @@ public class GUIController implements Initializable {
 		}
 
 		return false;
+	}
+
+	private void checkNoData(Series<Number, Number> series) {
+	        double d1 = 0;
+	        XYChart.Data<Number,Number> last = null;
+	        for (Object data : series.getData()) {
+	            if (data instanceof XYChart.Data<?,?>) {
+	                XYChart.Data<Number,Number> cdata = (XYChart.Data<Number,Number>)data;
+	                if (last != null && last.getYValue() == null) { 
+	                    double mid = (d1 + cdata.getYValue().doubleValue())/2;
+	                    last.setYValue(mid);
+	                    
+	                }
+	                if (last != null) d1 = last.getYValue().doubleValue();
+	                last = cdata;
+	            }
+	        }
+	        if (last != null && last.getYValue() == null) {
+	            last.setYValue(d1);
+	            Text nodata = new Text("no data");
+	            nodata.setTranslateY(nodata.getLayoutBounds().getHeight()/2);
+	            last.setNode(nodata);
+
+	        }
+	    }
+
+	private void updateValueMarker(Data<Number, Number> value) {
+		Integer temp = value.getYValue().intValue();
+		Text valueMarker = new Text(temp.toString());
+		paneLineChartPane.getChildren().add(valueMarker);
+
+		double x = value.getXValue().doubleValue();
+		double displayXPosition = charMainxAxis.getDisplayPosition(x) + 35;
+		valueMarker.setLayoutX(displayXPosition);
+
+		double y = value.getYValue().doubleValue();
+		double displayYPosition = 350 + charMainyAxis.getDisplayPosition(y);
+		valueMarker.setTranslateY(displayYPosition);
+		// valueMarker.setLayoutY(300);
+		System.out.println("Create I'm here @(" + displayXPosition + "," + displayYPosition + ")");
+		System.out.println("Create I'm refe @(" + valueMarker.getLayoutX() + "," + valueMarker.getLayoutY() + ")");
+		// update marker
 	}
 
 	@Override

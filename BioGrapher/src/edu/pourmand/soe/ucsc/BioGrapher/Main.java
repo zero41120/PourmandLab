@@ -109,7 +109,8 @@ public class Main extends Application {
 					} else {
 						out.println(msg.getString("<Error>DataLoad"));
 						sM.isDataInputted = false;
-						sM.currentState = States.DISPLAYING;
+						sM.currentState = States.SAVING;
+						//sM.currentState = States.DISPLAYING;
 						dP.resetProviderAndKeepData(true);
 						main.executeStateMachine();
 						break;
@@ -158,13 +159,21 @@ public class Main extends Application {
 				 * If remaining >0, process InputtingFile again.
 				 */
 				out.print("\n---CalibatingRemaining---\n");
+				out.println("Remaining:"+dP.getRemainingFileSize());
 				if (dP.getRemainingFileSize() > 0) {
 					sM.currentState = States.CALIBRATING;
 					sM.isDataInputted = true;
 					main.executeStateMachine();
 					break;
+				} else {
+					sM.currentState = States.SAVING;
+					sM.isDataInputted = false;
+					main.executeStateMachine();
+					break;
 				}
-
+			}
+			
+			case SAVING:
 				/*
 				 * Stage 5:
 				 * All files are loaded. Prompt the user to enter concentration for each file.
@@ -181,12 +190,11 @@ public class Main extends Application {
 					sM.isAlertClearDataComirmed = false;
 				}
    				fM.savePath(dP); 
-				sM.isDataInputted = false;
 				sM.currentState = States.DISPLAYING;
 				dP.resetProviderAndKeepData(true);
 				main.executeStateMachine();
 				break;
-			}
+			
 
 			case DISPLAYING:
 			/*

@@ -14,6 +14,18 @@ class DataProvider {
 	private String currentType = null;
 	private Integer pathCounter = 0;
 	private boolean isVariableValid = false;
+	
+	public Double getFileSizeType2() {
+		Double counterT2 = 0.0;
+		if (getDataCollection() != null) {
+			for (DataListCollection dataList : mainList) {
+				if (dataList.getListType_2() != null) {
+					counterT2 += dataList.getListType_2().size();
+				}
+			}
+		}
+		return counterT2;
+	}
 
 	/**
 	 * This is the method which returns the remaining size of the workinFiles
