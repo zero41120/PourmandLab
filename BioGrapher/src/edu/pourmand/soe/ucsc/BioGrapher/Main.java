@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
 import static java.lang.System.out;
@@ -47,7 +50,7 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		sM.running = GUIController.createMainScreen(primaryStage);
+		sM.running = createMainScreen(primaryStage);
 		refStage = primaryStage;
 		checkPreviousStage();
 		main.executeStateMachine();
@@ -235,6 +238,29 @@ public class Main extends Application {
 					msg.getString("<GUITEXT>HeaderError"), //
 					msg.getString("<GUITEXT>ContentError"), //
 					globalException);
+		}
+	}
+	
+	/**
+	 * This is the method which generates a main window.
+	 * 
+	 * @param primaryStage
+	 *            Stage to refer.
+	 * @return True is created successfully, false otherwise.
+	 */
+	public static boolean createMainScreen(Stage primaryStage) {
+		try {
+			Parent root = FXMLLoader.load(Main.class.getResource("BioGrapherUI.fxml"));
+			primaryStage.setTitle(msg.getString("<GUITEXT>TitleProgram"));
+			primaryStage.setScene(new Scene(root));
+			primaryStage.show();
+			out.println(msg.getString("<Notice>Greeting"));
+			return true;
+		} catch (Exception e) {
+			globalException = e;
+			e.printStackTrace();
+			out.println(msg.getString("<Error>LayoutCreate"));
+			return false;
 		}
 	}
 }

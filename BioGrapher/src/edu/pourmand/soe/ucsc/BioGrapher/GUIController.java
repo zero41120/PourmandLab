@@ -1,37 +1,24 @@
 package edu.pourmand.soe.ucsc.BioGrapher;
 
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Bounds;
-import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.chart.XYChart.Data;
-import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -48,7 +35,6 @@ import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
 import static edu.pourmand.soe.ucsc.BioGrapher.DataProvider.dP;
 import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.sM;
 import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.msg;
-import static edu.pourmand.soe.ucsc.BioGrapher.Main.globalException;
 import static edu.pourmand.soe.ucsc.BioGrapher.Main.refStage;
 import static edu.pourmand.soe.ucsc.BioGrapher.Main.main;
 import static java.lang.System.out;
@@ -71,188 +57,132 @@ public class GUIController implements Initializable {
 	@FXML NumberAxis charMainyAxis;
 	@FXML ProgressBar pbMainProgressBar;
 	@FXML LineChart<Number, Number> chartMainChart;
-	@FXML Pane paneLineChartPane;
 	// @formatter:on
 
-	static double progressSize = 0;
 	static double progressCounter = 0;
 
-	private void createSeries_Type_1(DataListCollection refDataList) {
-		if (refDataList.getListType_1() == null) {
-			return;
-		}
-		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
-		progressSize += refDataList.getListType_1().size();
-		series.setName(refDataList.getFileTitle());
-		for (DataType_1 refType_1 : refDataList.getListType_1()) {
-			series.getData().add(new XYChart.Data<Number, Number>(refType_1.getVoltage(), refType_1.getCurrnet()));
-			pbMainProgressBar.setProgress(progressCounter++ / progressSize);
-		}
-		Runnable addData = () -> {
-			chartMainChart.getData().add(series);
-		};
-		Platform.runLater(addData);
+	@Override
+	public void initialize(URL location, ResourceBundle resources) {
+
+		// Loads all GUI texts into the GUI elements.
+		btnCalibrationPlot.setText(msg.getString("<GUITEXT>ButtonCalibration"));
+		btnComparisonPlot.setText(msg.getString("<GUITEXT>ButtonComparision"));
+		btnClearData.setText(msg.getString("<GUITEXT>ButtonClearData"));
+		btnBrowse.setText(msg.getString("<GUITEXT>ButtonBrowse"));
+		btnEdit.setText(msg.getString("<GUITEXT>ButtonEdit"));
+
+		// Disable the buttons.
+		btnCalculateConcentration.setDisable(true);
+		btnCalibrationPlot.setDisable(true);
+		btnComparisonPlot.setDisable(true);
+		btnClearData.setDisable(true);
+		btnEdit.setDisable(true);
 	}
 
-	private void createSeries_Type_2(DataListCollection refCollection) {
-		if (refCollection.getListType_2() == null) {
-			return;
-		}
-		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
-		double sampleSize = 0;
-		double sampleTotal = 0;
-		for (DataType_2 refType_2 : refCollection.getListType_2()) {
-			pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType2());
-			// System.out.println(progressCounter + "/" + dP.getFileSizeType2()
-			// + " = " + pbMainProgressBar.getProgress());
-			if (refType_2.getTime() > 40.0 && refType_2.getTime() < 45) {
-				sampleSize++;
-				sampleTotal += refType_2.getAverageVol();
-			}
-		}
-		Double vols = sampleTotal / sampleSize;
-		System.out.println(vols + " for " + refCollection.getFileTitle());
-		XYChart.Data<Number, Number> myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(), vols);
-		series.getData().add(myData);
-		series.setName(refCollection.getFileTitle() + " : " + new DecimalFormat("##.##").format(vols));
-		Text text = new Text(new DecimalFormat("##.##").format(vols));
-        text.setTranslateY(text.getLayoutBounds().getHeight()/2);
-        myData.setNode(text);
-		Runnable addData = () -> {
-			chartMainChart.getData().add(series);
-			//checkNoData(series);
-			// updateValueMarker(myData);
-		};
-		Platform.runLater(addData);
+	/* ------------------------------------------
+	 * Methods below are button action methods. 
+	 * ------------------------------------------ */
 
-	}
-
-	private boolean isDataExists() {
-		if (dP.getDataCollection() == null) {
-			showAlertError(msg.getString("<GUITEXT>TitleError"), //
-					msg.getString("<GUITEXT>HeaderError"), //
-					msg.getString("<GUITEXT>ContentError_NoDataFound"), //
-					new Exception("No data found"));
-			btnComparisonPlot.setDisable(true);
-			btnCalibrationPlot.setDisable(true);
-			return false;
-		}
-		return true;
-	}
-
-	private void removeGraph() {
-		while (!chartMainChart.getData().isEmpty()) {
-			chartMainChart.getData().remove(chartMainChart.getData().size() - 1);
-		}
-	}
-
+	/**
+	 * This is the method that reloads the program when the reload button is
+	 * clicked. This is a temporary solution to the issue of the state machine
+	 * not able to call any method in the GUI controller.
+	 * 
+	 * TODO make the main program automatically reload.
+	 */
 	public void actionReloadStatus() {
-		printReport();
+		// Enables buttons if data provider has data
 		if (dP.getDataCollection() != null) {
 			btnClearData.setDisable(false);
 			btnEdit.setDisable(false);
-			if (btnCalibrationPlot.isDisable() && btnComparisonPlot.isDisable()) {
-				for (DataListCollection refDataList : dP.getDataCollection()) {
-					if (refDataList.getListType_1() != null) {
-						btnComparisonPlot.setDisable(false);
-					}
-					if (refDataList.getListType_2() != null) {
-						btnCalibrationPlot.setDisable(false);
-					}
-				}
+			for (DataListCollection refDataCollection : dP.getDataCollection()) {
+				// Buttons are enabled, no longer need to check the provider.
+				if (!btnCalibrationPlot.isDisable() && !btnComparisonPlot.isDisable())
+					break;
+				// Collection has type1, then enables the Comparison button
+				if (btnComparisonPlot.isDisable() && refDataCollection.getListType_1() != null)
+					btnComparisonPlot.setDisable(false);
+				// Collection has type1, then enables the Calibration button
+				if (btnCalibrationPlot.isDisable() && refDataCollection.getListType_2() != null)
+					btnCalibrationPlot.setDisable(false);
 			}
+
 		}
+		// Update the report on screen
+		printReport();
 	}
 
+	/**
+	 * This is the button action method which graphs the calibration plot
+	 */
 	public void actionCalibrationPlot(ActionEvent event) throws InterruptedException {
+		// Removes any graph on the screen and checks if data exists.
 		removeGraph();
+		printReport();
 		if (!isDataExists()) {
 			return;
 		}
-		this.printReport();
+		// Disables this button to prevent garbage tasks.
 		btnCalibrationPlot.setDisable(true);
-		chartMainChart.setCreateSymbols(true);
+		// Initializes some default value for the progress counter.
 		pbMainProgressBar.setProgress(0);
+		progressCounter = 0;
+		// Initializes some default value for the graph.
+		chartMainChart.setCreateSymbols(true);
 		charMainxAxis.setAutoRanging(false);
-		Double gap = 0.0, avarage = 0.0, max = 0.0, min = Double.MAX_VALUE;
+		Double totalGap = 0.0, avarageGap = 0.0, max = Double.MIN_VALUE, min = Double.MAX_VALUE;
 		for (int i = 1; i < dP.getDataCollection().size(); i++) {
+			// Gets the good range for the graph.
 			Double temp = dP.getDataCollection().get(i).getConcentration();
 			max = temp > max ? temp : max;
 			min = temp < min ? temp : min;
 			Double step = Math.abs(temp - dP.getDataCollection().get(i - 1).getConcentration());
-			gap += step;
+			totalGap += step;
 		}
-		avarage = gap / dP.getDataCollection().size();
-		charMainxAxis.setLowerBound(min - avarage / 2);
-		charMainxAxis.setUpperBound(max + avarage / 2);
+		avarageGap = totalGap / dP.getDataCollection().size();
 		charMainyAxis.setForceZeroInRange(false);
-		progressCounter = 0;
-		if (!dP.getDataCollection().isEmpty()) {
-			/*for (DataListCollection refDataList : dP.getDataCollection()) {
-				createSeries_Type_2(refDataList);
-			}*/
+		charMainxAxis.setLowerBound(min - avarageGap / 2);
+		charMainxAxis.setUpperBound(max + avarageGap / 2);
 
-			for (DataListCollection refDataList : dP.getDataCollection()) {
-				Runnable task = () -> {
-					createSeries_Type_2(refDataList);
-				};
-				Thread seriesThreads = new Thread(task);
-				seriesThreads.start();
-			}
+		// Creates multiple threads to get the data from collection.
+		for (DataListCollection refDataList : dP.getDataCollection()) {
+			Thread seriesThreads = new Thread(() -> createSeries_Type_2(refDataList));
+			seriesThreads.start();
 		}
-		/*
-		for (Series<Number, Number> s : chartMainChart.getData()) {
-			for (Data<Number, Number> d : s.getData()) {
-				updateValueMarker(d);
-			}
-		}*/
 	}
 
+	/**
+	 * This is the button action method which graphs the comparison plot
+	 */
 	public void actionComparisonPlot() {
+		// Removes any graph on the screen and checks if data exists.
 		removeGraph();
+		printReport();
 		if (!isDataExists()) {
 			return;
 		}
-		this.printReport();
-		btnComparisonPlot.setDisable(true); // Disable this button
-		chartMainChart.setCreateSymbols(false); // Hide dots
+		// Disables this button to prevent garbage tasks.
+		btnComparisonPlot.setDisable(true);
+		// Initializes some default value for the progress counter.
 		pbMainProgressBar.setProgress(0);
 		progressCounter = 0;
-		progressSize = 0;
+		// Initializes some default value for the graph.
+		chartMainChart.setCreateSymbols(false);
+		charMainxAxis.setAutoRanging(false);
 		charMainxAxis.setLowerBound(-1);
 		charMainxAxis.setUpperBound(1);
-		if (!dP.getDataCollection().isEmpty()) {
-			for (DataListCollection refDataList : dP.getDataCollection()) {
-				createSeries_Type_1(refDataList);
-				/*
-				series = new XYChart.Series<Number, Number>();
-				for (DataType_1 refType_1 : refDataList.getListType_1()) {
-					series.getData()
-							.add(new XYChart.Data<Number, Number>(//
-									refType_1.getVoltage(), //
-									refType_1.getCurrnet()));
-				}
-				series.setName(refDataList.getFileTitle());
-				chartMainChart.getData().add(series);
-				*/
-			}
 
+		// Creates multiple threads to get the data from collection.
+		for (DataListCollection refDataList : dP.getDataCollection()) {
+			Thread seriesThreads = new Thread(() -> createSeries_Type_1(refDataList));
+			seriesThreads.start();
 		}
 	}
 
-	public void actionCalculateConcentration() {
-		// TODO Linear aggression?
-	}
-
-	private void printReport() {
-		while (!txfwReport.getChildren().isEmpty()) {
-			txfwReport.getChildren().remove(txfwReport.getChildren().size() - 1);
-		}
-		Text message = new Text(dP.getReport());
-		message.setFont(Font.font("System", 13));
-		txfwReport.getChildren().add(message);
-	}
-
+	/**
+	 * This is the method which allows the user to edit the concentration for
+	 * each file.
+	 */
 	public void actionEdit(ActionEvent event) {
 		GUIController.showAlertConcentration(//
 				msg.getString("<GUITEXT>TitleConcentration"), //
@@ -266,9 +196,12 @@ public class GUIController implements Initializable {
 	 * will call the state machine to calibrate the files into useful data.
 	 */
 	public void actionBrowse(ActionEvent event) {
+		// Prompts the user to select files
 		FileChooser chooser = new FileChooser();
-		chooser.setTitle("Open File");
+		chooser.setTitle(msg.getString("<GUITEXT>TitleOpenFile"));
 		List<File> fileList = chooser.showOpenMultipleDialog(refStage);
+
+		// Execute the state machine when the program receives files
 		if (fileList != null) {
 			removeGraph();
 			btnClearData.setDisable(false);
@@ -278,6 +211,8 @@ public class GUIController implements Initializable {
 			sM.currentState = States.CALIBRATING;
 			main.executeStateMachine();
 		}
+
+		// Enable the buttons if read the corresponding files
 		for (DataListCollection refDataList : dP.getDataCollection()) {
 			if (refDataList.getListType_1() != null) {
 				btnComparisonPlot.setDisable(false);
@@ -286,6 +221,8 @@ public class GUIController implements Initializable {
 				btnCalibrationPlot.setDisable(false);
 			}
 		}
+
+		// Print report on the screen
 		printReport();
 	}
 
@@ -294,11 +231,14 @@ public class GUIController implements Initializable {
 	 * the user clicks OK, the data in the state machine will be deleted.
 	 */
 	public void actionClearData(ActionEvent event) {
+		// Prompts the user to confirm to clear data
 		boolean isConfirmed = showAlertConfrimation(//
 				msg.getString("<GUITEXT>TitleConfirm"), //
 				msg.getString("<GUITEXT>HeaderConfirmLoadPathFile"), //
 				msg.getString("<GUITEXT>ContentConfirmClearData"));
 		sM.isAlertClearDataComirmed = isConfirmed;
+
+		// Disables the button and clears all data in the provider.
 		if (isConfirmed) {
 			this.removeGraph();
 			pbMainProgressBar.setProgress(0);
@@ -312,33 +252,95 @@ public class GUIController implements Initializable {
 		}
 	}
 
+	public void actionCalculateConcentration() {
+		// TODO Linear aggression?
+	}
+
+	/* ------------------------------------------
+	 * Methods below are alert box methods. 
+	 * ------------------------------------------ */
+
+	/**
+	 * This is the method which generates a general alert message.
+	 * 
+	 * @param aTitle
+	 *            String of the title
+	 * @param aHeader
+	 *            String of the header
+	 * @param aContent
+	 *            String of the content
+	 * @return returns true if OK is selected, false otherwise.
+	 */
+	public static boolean showAlertConfrimation(String aTitle, String aHeader, String aContent) {
+		try {
+			// Creates a custom alert box.
+			Alert alert = new Alert(AlertType.CONFIRMATION);
+			alert.setTitle(aTitle);
+			alert.setHeaderText(aHeader);
+			alert.setContentText(aContent);
+			Optional<ButtonType> result = alert.showAndWait();
+			// Returns true if OK is clicked.
+			return result.get() == ButtonType.OK ? true : false;
+		} catch (Exception e) {
+			e.printStackTrace();
+			out.println(msg.getString("<Error>AlertBoxLoadPath"));
+		}
+
+		return false;
+	}
+
+	/**
+	 * This is the method which prompts the user to enter the concentration for
+	 * each files. The user can only click the assign button when all field are
+	 * filled. If the user clicks the cancel button, the program will try to get
+	 * the concentration from data provider or assigns a zero.
+	 * 
+	 * When creating the text field, this method will check concentration data
+	 * from last stage if we are restoring the last stage, and this method also
+	 * checks the data provider when user is editing the concentration.
+	 * 
+	 * @param aTitle
+	 * @param aHeader
+	 * @param aContent
+	 */
 	public static void showAlertConcentration(String aTitle, String aHeader, String aContent) {
-		// Create the custom dialog.
+		// Creates a custom dialog and the fields.
 		Dialog<List<Double>> dialog = new Dialog<>();
 		dialog.setTitle(aTitle);
 		dialog.setHeaderText(aHeader);
+		dialog.setContentText(aContent);
+		HBox rows; // Will be created in the loop.
+		VBox cols = new VBox();
+		NumberTextField[] concentrationInputField = new NumberTextField[dP.getDataCollection().size()];
 
-		// Set the button types.
+		// Sets the custom button types and adds to the dialog.
 		ButtonType assignType = new ButtonType("Assign", ButtonData.OK_DONE);
 		ButtonType cancelType = new ButtonType("Cancel", ButtonData.CANCEL_CLOSE);
 		dialog.getDialogPane().getButtonTypes().addAll(assignType, cancelType);
-		Node btnAssign = dialog.getDialogPane().lookupButton(assignType);
-		Node btnCancel = dialog.getDialogPane().lookupButton(cancelType);
 
+		// Gets the reference of the buttons.
+		Node btnAssign = dialog.getDialogPane().lookupButton(assignType);
+		// Node btnCancel = dialog.getDialogPane().lookupButton(cancelType);
+
+		// Initializes the boolean array for button assign.
 		Boolean[] agreement = new Boolean[dP.getDataCollection().size()];
 		Arrays.fill(agreement, Boolean.FALSE);
 		btnAssign.setDisable(true);
 
-		// Create the text fields.
-		HBox rows = new HBox();
-		VBox cols = new VBox();
-		NumberTextField[] concentrationInputField = new NumberTextField[dP.getDataCollection().size()];
-
-		// Set the text fields with names from DataProvider
+		// Sets the text fields and labels with names from DataProvider
 		for (int i = 0; i < dP.getDataCollection().size(); i++) {
+			// Initializes this text field.
 			final int copy = i;
 			concentrationInputField[i] = new NumberTextField();
 			concentrationInputField[i].setPromptText(dP.getDataCollection().get(i).getFileTitle());
+
+			// Creates a listener to enable/disable the assign button.
+			concentrationInputField[i].textProperty().addListener((observable, oldValue, newValue) -> {
+				agreement[copy] = !newValue.trim().isEmpty();
+				btnAssign.setDisable(Arrays.asList(agreement).contains(false));
+			});
+
+			// Gets the concentration from the last stage or the data provider.
 			if (dP.getWorkingConcentration() != null) {
 				concentrationInputField[i].setText(dP.getWorkingConcentration().get(i).toString());
 				agreement[i] = true;
@@ -346,48 +348,54 @@ public class GUIController implements Initializable {
 				concentrationInputField[i].setText(dP.getDataCollection().get(i).getConcentration().toString());
 				agreement[i] = true;
 			}
-			concentrationInputField[i].textProperty().addListener((observable, oldValue, newValue) -> {
-				agreement[copy] = !newValue.trim().isEmpty();
-				btnAssign.setDisable(Arrays.asList(agreement).contains(false));
-			});
+
+			// Adds the label and the text field into the row,
+			// then insert the row into the column
 			rows = new HBox();
 			rows.getChildren().add(concentrationInputField[i]);
 			rows.getChildren().add(new Label(dP.getDataCollection().get(i).getFileTitle()));
 			cols.getChildren().add(rows);
-		}
+		} // Text fields are created.
 
+		// Enables/Disables the assign depending on the text fields.
 		btnAssign.setDisable(Arrays.asList(agreement).contains(false));
+
+		// Loads everything into the dialog.
 		dialog.getDialogPane().setContent(cols);
 
-		// When Assign button is clicked
+		// When a button is clicked
 		dialog.setResultConverter(dialogButton -> {
 			if (dialogButton == assignType) {
+				// Inserts the concentration into the data provider.
 				for (int i = 0; i < dP.getDataCollection().size(); i++) {
 					Double concentration = Double.parseDouble(concentrationInputField[i].getText());
 					dP.getDataCollection().get(i).setConcentration(concentration);
 				}
-				// Convert the result to a list for console.
+
+				// Converts the result to a list isPresent().
 				List<Double> returnConcentration = new ArrayList<>();
 				for (TextField textField : concentrationInputField) {
 					returnConcentration.add(Double.parseDouble(textField.getText()));
 				}
 				return returnConcentration;
+
 			} else if (dialogButton == cancelType) {
+
+				// Restores the old concentration or assigns 0 if missing.
 				for (int i = 0; i < dP.getDataCollection().size(); i++) {
-					Double concentration;
-					try {
-						concentration = Double.parseDouble(concentrationInputField[i].getText());
-					} catch (Exception e) {
-						concentration = 0.0;
-					}
+					Double concentration = dP.getDataCollection().get(i).getConcentration();
+					concentration = concentration == null ? 0.0 : concentration;
 					dP.getDataCollection().get(i).setConcentration(concentration);
 				}
 			}
 			return null;
 		});
 
+		// Displays the dialog.
 		Optional<List<Double>> result = dialog.showAndWait();
 
+		// Sysouts the numbers in the text fields.
+		// We can further implement new function to this.
 		result.ifPresent(refList -> {
 			for (Double myDouble : refList) {
 				System.out.println(myDouble);
@@ -409,28 +417,27 @@ public class GUIController implements Initializable {
 	 *            on the error box.
 	 */
 	public static void showAlertError(String aTitle, String aHeader, String aContent, Exception ex) {
+		// Creates a custom alert box.
 		Alert alert = new Alert(AlertType.ERROR);
 		alert.setTitle(aTitle);
 		alert.setHeaderText(aHeader);
 		alert.setContentText(aContent);
 
-		// Create expandable Exception.
+		// Gets the exception and loads it into the writer.
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 		ex.printStackTrace(pw);
 		String exceptionText = sw.toString();
-
 		Label label = new Label("The exception stacktrace was:");
 
+		// Adds the exception the expandable text area.
 		TextArea textArea = new TextArea(exceptionText);
 		textArea.setEditable(false);
 		textArea.setWrapText(true);
-
 		textArea.setMaxWidth(Double.MAX_VALUE);
 		textArea.setMaxHeight(Double.MAX_VALUE);
 		GridPane.setVgrow(textArea, Priority.ALWAYS);
 		GridPane.setHgrow(textArea, Priority.ALWAYS);
-
 		GridPane expContent = new GridPane();
 		expContent.setMaxWidth(Double.MAX_VALUE);
 		expContent.add(label, 0, 0);
@@ -438,115 +445,131 @@ public class GUIController implements Initializable {
 
 		// Set expandable Exception into the dialog pane.
 		alert.getDialogPane().setExpandableContent(expContent);
-
 		alert.showAndWait();
 	}
 
+	/* ------------------------------------------
+	 * Methods below are private helper methods.
+	 * ------------------------------------------ */
+
 	/**
-	 * This is the method which generates a main window.
+	 * This is a private method that will be ran by multiple tread. This method
+	 * gets data from the reference data collection and adds it into the series.
+	 * The program will add the series into the chart using runLater to run it
+	 * on the main thread.
 	 * 
-	 * @param primaryStage
-	 *            Stage to refer.
-	 * @return True is created successfully, false otherwise.
+	 * @param refDataCollection
+	 *            DataListCollection witch contains the data.
 	 */
-	public static boolean createMainScreen(Stage primaryStage) {
-		try {
-			Parent root = FXMLLoader.load(Main.class.getResource("BioGrapherUI.fxml"));
-			primaryStage.setTitle(msg.getString("<GUITEXT>TitleProgram"));
-			primaryStage.setScene(new Scene(root));
-			primaryStage.show();
-			out.println(msg.getString("<Notice>Greeting"));
-			return true;
-		} catch (Exception e) {
-			globalException = e;
-			e.printStackTrace();
-			out.println(msg.getString("<Error>LayoutCreate"));
+	private void createSeries_Type_1(DataListCollection refDataCollection) {
+		// Rejects type 2.
+		if (refDataCollection.getListType_1() == null) {
+			return;
+		}
+
+		// Creates the series for the plots on the chart.
+		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
+		series.setName(refDataCollection.getFileTitle());
+
+		// Gets data from the reference file and updates the progress bar.
+		for (DataType_1 refType_1 : refDataCollection.getListType_1()) {
+			series.getData().add(new XYChart.Data<Number, Number>(refType_1.getVoltage(), refType_1.getCurrnet()));
+			pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType1());
+		}
+
+		// Add the series in correct thread when done.
+		Platform.runLater(() -> {
+			chartMainChart.getData().add(series);
+		});
+	}
+
+	/**
+	 * This is a private method that will be ran by multiple tread. This method
+	 * gets data from the reference data collection and adds it into the series.
+	 * The program will add the series into the chart using runLater to run it
+	 * on the main thread.
+	 * 
+	 * @param refCollection
+	 */
+	private void createSeries_Type_2(DataListCollection refCollection) {
+		// Rejects type 1;
+		if (refCollection.getListType_2() == null) {
+			return;
+		}
+
+		// Gets data from time ranged from 40~45.
+		Double sampleSize = 0.0, sampleTotal = 0.0;
+		for (DataType_2 refType_2 : refCollection.getListType_2()) {
+			if (refType_2.getTime() > 40.0 && refType_2.getTime() < 45) {
+				sampleSize++;
+				sampleTotal += refType_2.getAverageVol();
+			}
+			pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType2());
+		}
+		Double averageVoltage = sampleTotal / sampleSize;
+		System.out.println(averageVoltage + " for " + refCollection.getFileTitle());
+
+		// Creates the series for the plots on the chart.
+		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
+		XYChart.Data<Number, Number> myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(),
+				averageVoltage);
+		series.getData().add(myData);
+		series.setName(refCollection.getFileTitle());
+
+		// Creates the label on the plots
+		String value = "(" + refCollection.getConcentration().toString() + " : ";
+		value += new DecimalFormat("##.##").format(averageVoltage) + ")";
+		Text text = new Text(value);
+		text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
+		myData.setNode(text);
+
+		// Add the series in correct thread when done.
+		Platform.runLater(() -> {
+			chartMainChart.getData().add(series);
+		});
+
+	}
+
+	/**
+	 * This is a private method that checks the existence of the data. By the
+	 * design of the program, this method should always return true, otherwise
+	 * there is a serious issue.
+	 * 
+	 * @return true if data exists.
+	 */
+	private boolean isDataExists() {
+		if (dP.getDataCollection() == null) {
+			showAlertError(msg.getString("<GUITEXT>TitleError"), //
+					msg.getString("<GUITEXT>HeaderError"), //
+					msg.getString("<GUITEXT>ContentError_NoDataFound"), //
+					new Exception("No data found"));
+			btnComparisonPlot.setDisable(true);
+			btnCalibrationPlot.setDisable(true);
 			return false;
 		}
+		return true;
 	}
 
 	/**
-	 * This is the method which generates a general alert message.
-	 * 
-	 * @param aTitle
-	 *            String of the title
-	 * @param aHeader
-	 *            String of the header
-	 * @param aContent
-	 *            String of the content
-	 * @return returns true if OK is selected, false otherwise.
+	 * This is a private method that removes all data on the chart.
 	 */
-	public static boolean showAlertConfrimation(String aTitle, String aHeader, String aContent) {
-		try {
-			Alert alert = new Alert(AlertType.CONFIRMATION);
-			alert.setTitle(aTitle);
-			alert.setHeaderText(aHeader);
-			alert.setContentText(aContent);
-			Optional<ButtonType> result = alert.showAndWait();
-			return result.get() == ButtonType.OK ? true : false;
-		} catch (Exception e) {
-			e.printStackTrace();
-			out.println(msg.getString("<Error>AlertBoxLoadPath"));
+	private void removeGraph() {
+		while (!chartMainChart.getData().isEmpty()) {
+			chartMainChart.getData().remove(chartMainChart.getData().size() - 1);
 		}
-
-		return false;
 	}
 
-	private void checkNoData(Series<Number, Number> series) {
-	        double d1 = 0;
-	        XYChart.Data<Number,Number> last = null;
-	        for (Object data : series.getData()) {
-	            if (data instanceof XYChart.Data<?,?>) {
-	                XYChart.Data<Number,Number> cdata = (XYChart.Data<Number,Number>)data;
-	                if (last != null && last.getYValue() == null) { 
-	                    double mid = (d1 + cdata.getYValue().doubleValue())/2;
-	                    last.setYValue(mid);
-	                    
-	                }
-	                if (last != null) d1 = last.getYValue().doubleValue();
-	                last = cdata;
-	            }
-	        }
-	        if (last != null && last.getYValue() == null) {
-	            last.setYValue(d1);
-	            Text nodata = new Text("no data");
-	            nodata.setTranslateY(nodata.getLayoutBounds().getHeight()/2);
-	            last.setNode(nodata);
-
-	        }
-	    }
-
-	private void updateValueMarker(Data<Number, Number> value) {
-		Integer temp = value.getYValue().intValue();
-		Text valueMarker = new Text(temp.toString());
-		paneLineChartPane.getChildren().add(valueMarker);
-
-		double x = value.getXValue().doubleValue();
-		double displayXPosition = charMainxAxis.getDisplayPosition(x) + 35;
-		valueMarker.setLayoutX(displayXPosition);
-
-		double y = value.getYValue().doubleValue();
-		double displayYPosition = 350 + charMainyAxis.getDisplayPosition(y);
-		valueMarker.setTranslateY(displayYPosition);
-		// valueMarker.setLayoutY(300);
-		System.out.println("Create I'm here @(" + displayXPosition + "," + displayYPosition + ")");
-		System.out.println("Create I'm refe @(" + valueMarker.getLayoutX() + "," + valueMarker.getLayoutY() + ")");
-		// update marker
+	/**
+	 * This is a private method that updates the information on the main screen.
+	 */
+	private void printReport() {
+		while (!txfwReport.getChildren().isEmpty()) {
+			txfwReport.getChildren().remove(txfwReport.getChildren().size() - 1);
+		}
+		Text message = new Text(dP.getReport());
+		message.setFont(Font.font("System", 13));
+		txfwReport.getChildren().add(message);
 	}
-
-	@Override
-	public void initialize(URL location, ResourceBundle resources) {
-		btnCalibrationPlot.setText(msg.getString("<GUITEXT>ButtonCalibration"));
-		btnComparisonPlot.setText(msg.getString("<GUITEXT>ButtonComparision"));
-		btnClearData.setText(msg.getString("<GUITEXT>ButtonClearData"));
-		btnBrowse.setText(msg.getString("<GUITEXT>ButtonBrowse"));
-		btnEdit.setText(msg.getString("<GUITEXT>ButtonEdit"));
-		btnCalibrationPlot.setDisable(true);
-		btnComparisonPlot.setDisable(true);
-		btnClearData.setDisable(true);
-		btnEdit.setDisable(true);
-	}
-
 }
 
 class NumberTextField extends TextField {
@@ -567,7 +590,7 @@ class NumberTextField extends TextField {
 	}
 
 	private boolean validate(String text) {
-
+		// Modify by Tz-Shiuan Lin
 		if (text.equals(".")) {
 			int counter = 0;
 			for (int i = 0; i < this.getText().length(); i++) {

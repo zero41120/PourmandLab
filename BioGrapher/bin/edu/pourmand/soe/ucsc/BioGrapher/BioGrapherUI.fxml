@@ -43,23 +43,19 @@
                </children></AnchorPane>
          </items>
       </ToolBar>
-      <Pane fx:id="paneLineChartPane">
-         <children>
-            <LineChart fx:id="chartMainChart" animated="false" prefHeight="400.0" prefWidth="800.0">
-              <xAxis>
-                <NumberAxis fx:id="charMainxAxis" side="BOTTOM" />
-              </xAxis>
-              <yAxis>
-                <NumberAxis fx:id="charMainyAxis" side="LEFT" />
-              </yAxis>
-            </LineChart>
-         </children>
-      </Pane>
+      <LineChart fx:id="chartMainChart" animated="false" maxHeight="362.0" prefHeight="362.0" prefWidth="800.0">
+        <xAxis>
+          <NumberAxis fx:id="charMainxAxis" side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis fx:id="charMainyAxis" side="LEFT" />
+        </yAxis>
+      </LineChart>
       <HBox>
          <children>
             <TitledPane animated="false" text="Concetration">
                <content>
-              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="161.0" prefWidth="200.0">
                      <children>
       										<Button fx:id="btnCalculateConcentration" alignment="CENTER" contentDisplay="TOP" layoutX="2.0" layoutY="62.0" mnemonicParsing="false" onAction="#actionCalculateConcentration" text="Calculate Concentration" AnchorPane.leftAnchor="5.0" />
       												<Label layoutX="2.0" layoutY="6.0" text="Input Charge (nA):" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
@@ -94,12 +90,12 @@
       						</Tab>
       					</tabs>
       				</TabPane>
-            <TitledPane animated="false" prefHeight="170.0" prefWidth="324.0" text="Data Provider Status">
+            <TitledPane animated="false" prefHeight="194.0" prefWidth="314.0" text="Data Provider Status">
               <content>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                <AnchorPane minHeight="0.0" minWidth="0.0">
                      <children>
                         <TextFlow fx:id="txfwReport" focusTraversable="true" layoutX="21.4" layoutY="20.4" pickOnBounds="false" prefHeight="94.0" prefWidth="291.0" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                        <Button fx:id="btnReloadStatus" layoutX="104.0" layoutY="107.0" mnemonicParsing="false" onAction="#actionReloadStatus" text="Reload Status" AnchorPane.bottomAnchor="5.0" />
+                        <Button fx:id="btnReloadStatus" layoutX="104.0" layoutY="115.0" mnemonicParsing="false" onAction="#actionReloadStatus" text="Reload Status" AnchorPane.bottomAnchor="0.0" />
                      </children>
                   </AnchorPane>
               </content>

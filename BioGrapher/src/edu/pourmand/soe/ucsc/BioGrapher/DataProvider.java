@@ -15,6 +15,18 @@ class DataProvider {
 	private Integer pathCounter = 0;
 	private boolean isVariableValid = false;
 	
+	public Double getFileSizeType1(){
+		Double counterT1 = 0.0;
+		if (getDataCollection() != null) {
+			for (DataListCollection dataList : mainList) {
+				if (dataList.getListType_2() != null) {
+					counterT1 += dataList.getListType_1().size();
+				}
+			}
+		}
+		return counterT1;
+	}
+	
 	public Double getFileSizeType2() {
 		Double counterT2 = 0.0;
 		if (getDataCollection() != null) {
