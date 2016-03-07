@@ -18,8 +18,8 @@ public class StateMachine {
 	boolean	graphBTN1, graphBTN2, graphBTN3;
 	boolean	doneDrawing;
 	
-	// static Locale l = new Locale(System.getProperty("user.country"), System.getProperty("user.language"));
-	static Locale l = new Locale("zh", "TW");
+	static Locale l = new Locale(System.getProperty("user.country"), System.getProperty("user.language"));
+	// static Locale l = new Locale("zh", "TW");
 	static ResourceBundle msg = ResourceBundle.getBundle("edu.pourmand.soe.ucsc.BioGrapher/StringBundles/SBundle", l);
 	
 	static StateMachine sM = new StateMachine(States.BEGINNING);

@@ -8,6 +8,7 @@ public class DataListCollection{
 	private Double concentration;
 	private List<DataType_1> listType_1;
 	private List<DataType_2> listType_2;
+
 	
 	public String getFileTitle() {
 		return fileTitle;
@@ -39,6 +40,7 @@ public class DataListCollection{
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
 	}
+	
 }
 
 class DataType_1 {
@@ -113,4 +115,3 @@ class DataType_2 {
 	}
 
 }
-

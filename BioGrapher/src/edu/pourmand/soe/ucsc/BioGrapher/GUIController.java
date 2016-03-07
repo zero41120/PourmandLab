@@ -1,13 +1,16 @@
 package edu.pourmand.soe.ucsc.BioGrapher;
 
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.stage.FileChooser;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
@@ -15,18 +18,19 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.FileChooser;
 
+import java.net.URL;
+import java.text.DecimalFormat;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.URL;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -37,7 +41,6 @@ import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.sM;
 import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.msg;
 import static edu.pourmand.soe.ucsc.BioGrapher.Main.refStage;
 import static edu.pourmand.soe.ucsc.BioGrapher.Main.main;
-import static java.lang.System.out;
 
 public class GUIController implements Initializable {
 	// @formatter:off
@@ -46,20 +49,19 @@ public class GUIController implements Initializable {
 	@FXML Button btnClearData;
 	@FXML Button btnCalibrationPlot;
 	@FXML Button btnComparisonPlot;
-	@FXML Button btnCalculateConcentration;
+	@FXML Button btnEstimateConcentration;
 	@FXML Button btnReloadStatus;
-	@FXML TextField txfCVVoltageUsed;
-	@FXML TextField txfTCVVoltageUsed;
-	@FXML TextField txfTCVConcentration;
-	@FXML TextField txfConcentrationInput;
+	@FXML TextField txfCInputCharge;
 	@FXML TextFlow txfwReport;
+	@FXML Label labEstimateConcentration;
 	@FXML NumberAxis charMainxAxis;
 	@FXML NumberAxis charMainyAxis;
 	@FXML ProgressBar pbMainProgressBar;
 	@FXML LineChart<Number, Number> chartMainChart;
 	// @formatter:on
 
-	static double progressCounter = 0;
+	static Double progressCounter = 0.0;
+	static Boolean calculatedLinearRegression = false;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -72,7 +74,7 @@ public class GUIController implements Initializable {
 		btnEdit.setText(msg.getString("<GUITEXT>ButtonEdit"));
 
 		// Disable the buttons.
-		btnCalculateConcentration.setDisable(true);
+		btnEstimateConcentration.setDisable(true);
 		btnCalibrationPlot.setDisable(true);
 		btnComparisonPlot.setDisable(true);
 		btnClearData.setDisable(true);
@@ -92,7 +94,14 @@ public class GUIController implements Initializable {
 	 */
 	public void actionReloadStatus() {
 		// Enables buttons if data provider has data
+		this.removeGraph();
+		pbMainProgressBar.setProgress(0);
+		txfCInputCharge.setText("");
+		labEstimateConcentration.setText("");
+		btnEstimateConcentration.setDisable(true);
+		calculatedLinearRegression = false;
 		if (dP.getDataCollection() != null) {
+			pbMainProgressBar.setProgress(progressCounter = 0.0);
 			btnClearData.setDisable(false);
 			btnEdit.setDisable(false);
 			for (DataListCollection refDataCollection : dP.getDataCollection()) {
@@ -122,14 +131,15 @@ public class GUIController implements Initializable {
 		if (!isDataExists()) {
 			return;
 		}
-		// Disables this button to prevent garbage tasks.
+		// Disables this button.
 		btnCalibrationPlot.setDisable(true);
+		btnEstimateConcentration.setDisable(false);
 		// Initializes some default value for the progress counter.
 		pbMainProgressBar.setProgress(0);
-		progressCounter = 0;
+		progressCounter = 0.0;
 		// Initializes some default value for the graph.
 		chartMainChart.setCreateSymbols(true);
-		charMainxAxis.setAutoRanging(false);
+		/* AutoRanging will handle this.
 		Double totalGap = 0.0, avarageGap = 0.0, max = Double.MIN_VALUE, min = Double.MAX_VALUE;
 		for (int i = 1; i < dP.getDataCollection().size(); i++) {
 			// Gets the good range for the graph.
@@ -140,15 +150,19 @@ public class GUIController implements Initializable {
 			totalGap += step;
 		}
 		avarageGap = totalGap / dP.getDataCollection().size();
-		charMainyAxis.setForceZeroInRange(false);
 		charMainxAxis.setLowerBound(min - avarageGap / 2);
 		charMainxAxis.setUpperBound(max + avarageGap / 2);
+		 */
+		charMainxAxis.setAutoRanging(true);
+		charMainyAxis.setForceZeroInRange(false);
 
 		// Creates multiple threads to get the data from collection.
 		for (DataListCollection refDataList : dP.getDataCollection()) {
 			Thread seriesThreads = new Thread(() -> createSeries_Type_2(refDataList));
 			seriesThreads.start();
+			seriesThreads.join();
 		}
+
 	}
 
 	/**
@@ -163,14 +177,15 @@ public class GUIController implements Initializable {
 		}
 		// Disables this button to prevent garbage tasks.
 		btnComparisonPlot.setDisable(true);
+		btnEstimateConcentration.setDisable(true);
 		// Initializes some default value for the progress counter.
 		pbMainProgressBar.setProgress(0);
-		progressCounter = 0;
+		progressCounter = 0.0;
 		// Initializes some default value for the graph.
 		chartMainChart.setCreateSymbols(false);
 		charMainxAxis.setAutoRanging(false);
-		charMainxAxis.setLowerBound(-1);
-		charMainxAxis.setUpperBound(1);
+		charMainxAxis.setLowerBound(-1.25);
+		charMainxAxis.setUpperBound(1.25);
 
 		// Creates multiple threads to get the data from collection.
 		for (DataListCollection refDataList : dP.getDataCollection()) {
@@ -212,13 +227,15 @@ public class GUIController implements Initializable {
 			main.executeStateMachine();
 		}
 
-		// Enable the buttons if read the corresponding files
-		for (DataListCollection refDataList : dP.getDataCollection()) {
-			if (refDataList.getListType_1() != null) {
-				btnComparisonPlot.setDisable(false);
-			}
-			if (refDataList.getListType_2() != null) {
-				btnCalibrationPlot.setDisable(false);
+		if (dP.getDataCollection() != null) {
+			// Enable the buttons if read the corresponding files
+			for (DataListCollection refDataList : dP.getDataCollection()) {
+				if (refDataList.getListType_1() != null) {
+					btnComparisonPlot.setDisable(false);
+				}
+				if (refDataList.getListType_2() != null) {
+					btnCalibrationPlot.setDisable(false);
+				}
 			}
 		}
 
@@ -242,18 +259,57 @@ public class GUIController implements Initializable {
 		if (isConfirmed) {
 			this.removeGraph();
 			pbMainProgressBar.setProgress(0);
-			btnCalculateConcentration.setDisable(true);
+			txfCInputCharge.setText("");
+			labEstimateConcentration.setText("");
+			calculatedLinearRegression = false;
+
+			btnEstimateConcentration.setDisable(true);
 			btnCalibrationPlot.setDisable(true);
 			btnComparisonPlot.setDisable(true);
 			btnClearData.setDisable(true);
 			btnEdit.setDisable(true);
+			calculatedLinearRegression = false;
 			main.executeStateMachine();
 			printReport();
 		}
 	}
 
-	public void actionCalculateConcentration() {
-		// TODO Linear aggression?
+	/**
+	 * This is the method which calculates the linear regression and estimates
+	 * the concentration.
+	 */
+	public void actionEstimateConcentration() {
+		// Calculates linear regression
+		if (!calculatedLinearRegression) {
+			chartMainChart.getData().add(calculateLinearRegression());
+		}
+		// Adds the estimate value on the graph and label
+		if (!txfCInputCharge.getText().isEmpty()) {
+			System.out.println(txfCInputCharge.getText().toString());
+			try {
+				Double xValue = Double.parseDouble(txfCInputCharge.getText().toString());
+				XYChart.Series<Number, Number> estimatedSeries = new XYChart.Series<Number, Number>();
+				XYChart.Data<Number, Number> estimatedData = new XYChart.Data<Number, Number>(xValue,
+						getEstimatedYvalue(xValue));
+				String estimatedString = new DecimalFormat("##.##").format(getEstimatedYvalue(xValue));
+				Text text = new Text(estimatedString);
+				text.setFill(Color.RED);
+				text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
+				estimatedData.setNode(text);
+				estimatedSeries.setName("Est:" + txfCInputCharge.getText() + " : " + estimatedString);
+				estimatedSeries.getData().add(estimatedData);
+				chartMainChart.getData().add(estimatedSeries);
+				labEstimateConcentration.setText(estimatedString);
+				txfCInputCharge.setText("");
+			} catch (Exception e) {
+				// Double.pareseDouble() might fail if user enters a invalid
+				// text string.
+				// Reset the text box.
+				txfCInputCharge.setText("");
+				labEstimateConcentration.setText("");
+			}
+
+		}
 	}
 
 	/* ------------------------------------------
@@ -283,7 +339,7 @@ public class GUIController implements Initializable {
 			return result.get() == ButtonType.OK ? true : false;
 		} catch (Exception e) {
 			e.printStackTrace();
-			out.println(msg.getString("<Error>AlertBoxLoadPath"));
+			System.out.println(msg.getString("<Error>AlertBoxLoadPath"));
 		}
 
 		return false;
@@ -458,24 +514,34 @@ public class GUIController implements Initializable {
 	 * The program will add the series into the chart using runLater to run it
 	 * on the main thread.
 	 * 
-	 * @param refDataCollection
+	 * @param refCollection
 	 *            DataListCollection witch contains the data.
 	 */
-	private void createSeries_Type_1(DataListCollection refDataCollection) {
+	private void createSeries_Type_1(DataListCollection refCollection) {
 		// Rejects type 2.
-		if (refDataCollection.getListType_1() == null) {
+		if (refCollection.getListType_1() == null) {
 			return;
 		}
 
 		// Creates the series for the plots on the chart.
 		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
-		series.setName(refDataCollection.getFileTitle());
+		series.setName(refCollection.getConcentration() + " : " + refCollection.getFileTitle());
+		XYChart.Data<Number, Number> myData = new XYChart.Data<>();
 
 		// Gets data from the reference file and updates the progress bar.
-		for (DataType_1 refType_1 : refDataCollection.getListType_1()) {
-			series.getData().add(new XYChart.Data<Number, Number>(refType_1.getVoltage(), refType_1.getCurrnet()));
-			pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType1());
+		for (DataType_1 refType_1 : refCollection.getListType_1()) {
+			myData = new XYChart.Data<Number, Number>(refType_1.getVoltage(), refType_1.getCurrnet());
+			series.getData().add(myData);
+			synchronized (progressCounter) {
+				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType1());
+			}
 		}
+
+		// Creates the label on the plots
+		String value = "      (" + refCollection.getConcentration().toString() + ")";
+		Text text = new Text(value);
+		text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
+		myData.setNode(text);
 
 		// Add the series in correct thread when done.
 		Platform.runLater(() -> {
@@ -504,7 +570,9 @@ public class GUIController implements Initializable {
 				sampleSize++;
 				sampleTotal += refType_2.getAverageVol();
 			}
-			pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType2());
+			synchronized (progressCounter) {
+				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType2());
+			}
 		}
 		Double averageVoltage = sampleTotal / sampleSize;
 		System.out.println(averageVoltage + " for " + refCollection.getFileTitle());
@@ -514,13 +582,14 @@ public class GUIController implements Initializable {
 		XYChart.Data<Number, Number> myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(),
 				averageVoltage);
 		series.getData().add(myData);
-		series.setName(refCollection.getFileTitle());
+		series.setName(refCollection.getConcentration() + " : " + refCollection.getFileTitle());
 
 		// Creates the label on the plots
 		String value = "(" + refCollection.getConcentration().toString() + " : ";
 		value += new DecimalFormat("##.##").format(averageVoltage) + ")";
 		Text text = new Text(value);
-		text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
+		text.setTranslateY(-10 + text.getLayoutBounds().getHeight() / 2);
+		text.setTranslateX(45);
 		myData.setNode(text);
 
 		// Add the series in correct thread when done.
@@ -570,6 +639,65 @@ public class GUIController implements Initializable {
 		message.setFont(Font.font("System", 13));
 		txfwReport.getChildren().add(message);
 	}
+
+	/**
+	 * This is the method what calculates the linear regression of the data.
+	 * Estimated Y = Y intersect + Slope * X. \\
+	 * Slope = Variance of X / Product of the average distance to the mean of X and Y \\
+	 * Y intersect = averageY - averageX * slope \\
+	 * 
+	 * @return the XYChart Series with (0,Y intersect), (Mean of X, Mean of Y),
+	 *         and (Max X, Estimated Y).
+	 */
+	private XYChart.Series<Number, Number> calculateLinearRegression() {
+
+		ObservableList<Series<Number, Number>> series = chartMainChart.getData();
+		List<Double> xValue = new ArrayList<Double>();
+		List<Double> xNormal = new ArrayList<Double>();
+		List<Double> xSquare = new ArrayList<Double>();
+		List<Double> yValue = new ArrayList<Double>();
+		List<Double> yNormal = new ArrayList<Double>();
+		List<Double> xyNormalProduct = new ArrayList<Double>();
+		Double yIntersect = 0.0;
+		Double xMax = 0.0;
+
+		for (Series<Number, Number> s : series) {
+			xValue.add(Double.parseDouble(s.getData().get(0).getXValue().toString()));
+			yValue.add(Double.parseDouble(s.getData().get(0).getYValue().toString()));
+		}
+		Double averageX = xValue.stream().mapToDouble(a -> a).average().getAsDouble();
+		Double averageY = yValue.stream().mapToDouble(a -> a).average().getAsDouble();
+		System.out.println(averageX);
+		System.out.println(averageY);
+
+		for (int i = 0; i < xValue.size(); i++) {
+			xNormal.add(xValue.get(i) / averageX);
+			xSquare.add(xNormal.get(i) * xNormal.get(i));
+			yNormal.add(yValue.get(i) / averageY);
+			xyNormalProduct.add(xNormal.get(i) * yNormal.get(i));
+		}
+
+		Double slope = xSquare.stream().mapToDouble(a -> a).average().getAsDouble()
+				/ xyNormalProduct.stream().mapToDouble(a -> a).average().getAsDouble();
+		yIntersect = averageY - averageX * slope;
+
+		dP.setYIntersect(yIntersect);
+		dP.setSlope(slope);
+		xMax = Collections.max(xValue);
+		XYChart.Series<Number, Number> regression = new Series<>();
+		regression.getData().add(new XYChart.Data<Number, Number>(0, yIntersect));
+		regression.getData().add(new XYChart.Data<Number, Number>(averageX, averageY));
+		regression.getData().add(new XYChart.Data<Number, Number>(xMax, yIntersect + slope * xMax));
+		regression.setName("Linear regression");
+
+		calculatedLinearRegression = true;
+		return regression;
+	}
+
+	private Double getEstimatedYvalue(Double xValue) {
+		return dP.getYIntersect() + dP.getSlope() * xValue;
+	}
+
 }
 
 class NumberTextField extends TextField {
