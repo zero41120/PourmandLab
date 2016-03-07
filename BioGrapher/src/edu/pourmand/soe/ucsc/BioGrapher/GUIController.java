@@ -3,6 +3,7 @@ package edu.pourmand.soe.ucsc.BioGrapher;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -10,6 +11,7 @@ import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.chart.XYChart.Data;
 import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
@@ -24,13 +26,17 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -62,6 +68,8 @@ public class GUIController implements Initializable {
 
 	static Double progressCounter = 0.0;
 	static Boolean calculatedLinearRegression = false;
+	static Boolean displayingCalibration = false;
+	static Boolean displayingComparision = false;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -85,6 +93,50 @@ public class GUIController implements Initializable {
 	 * Methods below are button action methods. 
 	 * ------------------------------------------ */
 
+	public void actionExportCalibration() {
+		boolean hasType2 = false;
+		for (DataListCollection d : dP.getDataCollection()) {
+			if (d.getListType_2() != null) {
+				hasType2 = true;
+			}
+		}
+		if (!hasType2) {
+			showAlertError("Error", "No type 2 data found", "Please enter type 2 files in to the program.", new Exception("Missing Data"));
+			return;
+		}
+		// check calibration, run it if needed
+		if (!displayingCalibration) {
+			try {
+				actionCalibrationPlot();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		DirectoryChooser chooser = new DirectoryChooser();
+		chooser.setTitle("Select Location"); //TODO GUI text
+		File selectedDirectory = chooser.showDialog(refStage);
+		try {
+			DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+			String fileName = "Biographer_Export_"+dateFormat.format(new Date())+".txt";
+			FileWriter writeFile = new FileWriter(new File(selectedDirectory, fileName));
+			PrintWriter writerPrint = new PrintWriter(writeFile);
+			writerPrint.println("Title\tConcetration\tData");
+			for (Series<Number, Number> series : chartMainChart.getData()) {
+				for (Data<Number, Number> data : series.getData()) {
+					writerPrint.println(series.getName()+"\t"+new DecimalFormat("##.##").format(data.getXValue())+"\t"+new DecimalFormat("##.##").format(data.getYValue()));
+				}
+			}
+			writerPrint.flush();
+			showAlertConfrimation("Export", "Success", "File exported to: \n" + selectedDirectory);
+			System.out.println("Created Export"); //TODO message bundles
+			writerPrint.close();
+		} catch (Exception e) {
+			// TODO should delete the file if exists
+			System.out.println(e);
+		}
+	}
+	
 	/**
 	 * This is the method that reloads the program when the reload button is
 	 * clicked. This is a temporary solution to the issue of the state machine
@@ -124,15 +176,15 @@ public class GUIController implements Initializable {
 	/**
 	 * This is the button action method which graphs the calibration plot
 	 */
-	public void actionCalibrationPlot(ActionEvent event) throws InterruptedException {
+	public void actionCalibrationPlot() throws InterruptedException {
 		// Removes any graph on the screen and checks if data exists.
 		removeGraph();
 		printReport();
 		if (!isDataExists()) {
 			return;
 		}
-		// Disables this button.
-		btnCalibrationPlot.setDisable(true);
+		displayingCalibration = true;
+		// Enables Estimate button.
 		btnEstimateConcentration.setDisable(false);
 		// Initializes some default value for the progress counter.
 		pbMainProgressBar.setProgress(0);
@@ -175,8 +227,8 @@ public class GUIController implements Initializable {
 		if (!isDataExists()) {
 			return;
 		}
+		displayingComparision = true;
 		// Disables this button to prevent garbage tasks.
-		btnComparisonPlot.setDisable(true);
 		btnEstimateConcentration.setDisable(true);
 		// Initializes some default value for the progress counter.
 		pbMainProgressBar.setProgress(0);
@@ -623,6 +675,8 @@ public class GUIController implements Initializable {
 	 * This is a private method that removes all data on the chart.
 	 */
 	private void removeGraph() {
+		displayingCalibration = false;
+		displayingComparision = false;
 		while (!chartMainChart.getData().isEmpty()) {
 			chartMainChart.getData().remove(chartMainChart.getData().size() - 1);
 		}

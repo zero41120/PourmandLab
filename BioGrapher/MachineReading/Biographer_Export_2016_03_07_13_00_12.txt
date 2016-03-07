@@ -1,0 +1,10 @@
+Title	Concetration	Data
+0.1 : 158.64	0.1	158.64
+0.5 : 160.04	0.5	160.04
+0.0 : 152.69	0	152.69
+1.0 : 155.87	1	155.87
+3.0 : 156.18	3	156.18
+Linear regression	0	154.45
+Linear regression	0.92	156.68
+Linear regression	3	161.73
+Est:1 : 156.88	1	156.88
