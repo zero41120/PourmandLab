@@ -582,7 +582,7 @@ public class GUIController implements Initializable {
 		XYChart.Data<Number, Number> myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(),
 				averageVoltage);
 		series.getData().add(myData);
-		series.setName(refCollection.getConcentration() + " : " + refCollection.getFileTitle());
+		series.setName(refCollection.getConcentration() + " : " + new DecimalFormat("##.##").format(averageVoltage));
 
 		// Creates the label on the plots
 		String value = "(" + refCollection.getConcentration().toString() + " : ";
