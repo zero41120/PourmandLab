@@ -8,6 +8,7 @@ public class DataListCollection{
 	private Double concentration;
 	private List<DataType_1> listType_1;
 	private List<DataType_2> listType_2;
+	private List<DataType_3> listType_3;
 
 	
 	public String getFileTitle() {
@@ -39,6 +40,12 @@ public class DataListCollection{
 	}
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
+	}
+	public List<DataType_3> getListType_3() {
+		return listType_3;
+	}
+	public void setListType_3(List<DataType_3> listType_3) {
+		this.listType_3 = listType_3;
 	}
 	
 }
@@ -112,6 +119,44 @@ class DataType_2 {
 
 	protected void setAverageVol(double averageVol) {
 		this.averageVol = averageVol;
+	}
+
+}
+
+class DataType_3{
+	private double time;
+	private double voltage;
+	private double current;
+	
+	protected DataType_3(double time, double voltage, double current) {
+		this.time = time;
+		this.voltage = voltage;
+		this.current = current;
+	}
+	
+	protected DataType_3(String time, String voltage, String current) {
+		this.time = Double.parseDouble(time);
+		this.voltage = Double.parseDouble(voltage);
+		this.current = Double.parseDouble(current);
+	}
+	
+	public double getTime() {
+		return time;
+	}
+	public void setTime(double time) {
+		this.time = time;
+	}
+	public double getVoltage() {
+		return voltage;
+	}
+	public void setVoltage(double voltage) {
+		this.voltage = voltage;
+	}
+	public double getCurrent() {
+		return current;
+	}
+	public void setCurrent(double current) {
+		this.current = current;
 	}
 
 }

@@ -30,7 +30,7 @@ public class DataAnalyzer {
 			while ((line = ReadBuffer.readLine()) != null) {
 				if (this.checkType_1(line)) {
 					return "Type1";
-				} else if (this.checkType2(line)) {
+				} else if (this.checkType_2(line)) {
 					return "Type2";
 				} else if (this.checkPathFile(line)) {
 					return "PathType";
@@ -59,7 +59,7 @@ public class DataAnalyzer {
 		List<DataListCollection> myDataListCollections = new ArrayList<>();
 		DataListCollection dataList = new DataListCollection();
 		dataList.setFileTitle(refFile.getName());
-		
+
 		switch (dataType) {
 		case "Type1":
 			DataType_1 pivot1 = searchDataType_1_Pivot(refFile);
@@ -74,11 +74,11 @@ public class DataAnalyzer {
 			dataList.setListType_2(myDataArray_2);
 			dataList.setFilePath(refFile.getAbsolutePath());
 			myDataListCollections.add(dataList);
-			tempProvider.setMainList(myDataListCollections);			
+			tempProvider.setMainList(myDataListCollections);
 			return tempProvider;
 
 		case "PathType":
-			
+
 			FileConcetrationList myFC = this.getFilesFromPathFile(refFile);
 			tempProvider.setWorkingFiles(myFC.getMyFiles());
 			tempProvider.setWorkingConcentration(myFC.getMyConcentration());
@@ -109,7 +109,7 @@ public class DataAnalyzer {
 	 *            PathFile that contains the paths from previous operation.
 	 * @return A list of string object of all paths.
 	 */
-	private 	FileConcetrationList getFilesFromPathFile(File pathFile) {
+	private FileConcetrationList getFilesFromPathFile(File pathFile) {
 
 		DataFileManager myManager = new DataFileManager();
 		FileConcetrationList myFC = new FileConcetrationList();
@@ -137,7 +137,7 @@ public class DataAnalyzer {
 		} catch (Exception e) {
 			System.out.println(e);
 		}
-		
+
 		return myFC;
 	}
 
@@ -234,7 +234,7 @@ public class DataAnalyzer {
 		StringTokenizer stk = new StringTokenizer(line);
 		DataType_1 temp = new DataType_1(stk.nextToken(", "), stk.nextToken(", "));
 		temp.setCurrnet(temp.getCurrnet() - pivot.getCurrnet());
-		temp.setCurrnet(temp.getCurrnet()*1000000000);
+		temp.setCurrnet(temp.getCurrnet() * 1000000000);
 		return temp;
 	}
 
@@ -245,7 +245,7 @@ public class DataAnalyzer {
 	 *            A string extract from file.
 	 * @return true if sampleString contains the signature.
 	 */
-	private boolean checkType2(String sampleString) {
+	private boolean checkType_2(String sampleString) {
 		return sampleString.equals("\"AcquisitionMode=Episodic Stimulation\"");
 	}
 
@@ -282,7 +282,7 @@ public class DataAnalyzer {
 	}
 
 	/**
-	 * --DataType_1-- This is the method which scans the time and traces from
+	 * --DataType_2-- This is the method which scans the time and traces from
 	 * the line argument and creates a DataType_2 object.
 	 * 
 	 * @param line
@@ -294,28 +294,44 @@ public class DataAnalyzer {
 	 */
 	private DataType_2 createDataType_2_Object(String line) {
 		StringTokenizer stk = new StringTokenizer(line);
-		// All data will be parsed, but only the voltage will be stored in the object
+		// All data will be parsed, but only the voltage will be stored in the
+		// object
 		DataType_2 temp = new DataType_2(stk.nextToken("\t"), stk.nextToken("\t"), stk.nextToken("\t"),
 				stk.nextToken("\t"), stk.nextToken("\t"), stk.nextToken("\t"), stk.nextToken("\t"));
 		return temp;
 	}
 
+	private boolean checkType_3(String line) {
+		// TODO
+		return false;
+	}
+
+	private DataType_3 createDataType_3_Object(String line) {
+		DataType_3 temp = new DataType_3(1, 1, 1);
+		// TODO
+		return temp;
+	}
+
 }
 
-class FileConcetrationList{
+class FileConcetrationList {
 	private List<File> myFile = null;
 	private List<Double> myConcentration = null;
+
 	public List<File> getMyFiles() {
 		return myFile;
 	}
+
 	public void setMyFile(List<File> myFile) {
 		this.myFile = myFile;
 	}
+
 	public List<Double> getMyConcentration() {
 		return myConcentration;
 	}
+
 	public void setMyConcentration(List<Double> myConcentration) {
 		this.myConcentration = myConcentration;
 	}
-	
+
 }

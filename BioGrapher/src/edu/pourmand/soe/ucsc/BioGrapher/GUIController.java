@@ -93,6 +93,13 @@ public class GUIController implements Initializable {
 	 * Methods below are button action methods. 
 	 * ------------------------------------------ */
 
+	public void actionCalibration2() {
+		// TODO
+	}
+	
+	/**
+	 * This is the method which exports the data and estimated data to a .txt file
+	 */
 	public void actionExportCalibration() {
 		boolean hasType2 = false;
 		for (DataListCollection d : dP.getDataCollection()) {
@@ -101,7 +108,8 @@ public class GUIController implements Initializable {
 			}
 		}
 		if (!hasType2) {
-			showAlertError("Error", "No type 2 data found", "Please enter type 2 files in to the program.", new Exception("Missing Data"));
+			showAlertError("Error", "No type 2 data found", "Please enter type 2 files in to the program.",
+					new Exception("Missing Data"));
 			return;
 		}
 		// check calibration, run it if needed
@@ -114,29 +122,30 @@ public class GUIController implements Initializable {
 		}
 
 		DirectoryChooser chooser = new DirectoryChooser();
-		chooser.setTitle("Select Location"); //TODO GUI text
+		chooser.setTitle("Select Location"); // TODO GUI text
 		File selectedDirectory = chooser.showDialog(refStage);
 		try {
 			DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-			String fileName = "Biographer_Export_"+dateFormat.format(new Date())+".txt";
+			String fileName = "Biographer_Export_" + dateFormat.format(new Date()) + ".txt";
 			FileWriter writeFile = new FileWriter(new File(selectedDirectory, fileName));
 			PrintWriter writerPrint = new PrintWriter(writeFile);
 			writerPrint.println("Title\tConcetration\tData");
 			for (Series<Number, Number> series : chartMainChart.getData()) {
 				for (Data<Number, Number> data : series.getData()) {
-					writerPrint.println(series.getName()+"\t"+new DecimalFormat("##.##").format(data.getXValue())+"\t"+new DecimalFormat("##.##").format(data.getYValue()));
+					writerPrint.println(series.getName() + "\t" + new DecimalFormat("##.##").format(data.getXValue())
+							+ "\t" + new DecimalFormat("##.##").format(data.getYValue()));
 				}
 			}
 			writerPrint.flush();
 			showAlertConfrimation("Export", "Success", "File exported to: \n" + selectedDirectory);
-			System.out.println("Created Export"); //TODO message bundles
+			System.out.println("Created Export"); // TODO message bundles
 			writerPrint.close();
 		} catch (Exception e) {
 			// TODO should delete the file if exists
 			System.out.println(e);
 		}
 	}
-	
+
 	/**
 	 * This is the method that reloads the program when the reload button is
 	 * clicked. This is a temporary solution to the issue of the state machine
@@ -339,16 +348,18 @@ public class GUIController implements Initializable {
 		if (!txfCInputCharge.getText().isEmpty()) {
 			System.out.println(txfCInputCharge.getText().toString());
 			try {
-				Double xValue = Double.parseDouble(txfCInputCharge.getText().toString());
+				Double yValue = Double.parseDouble(txfCInputCharge.getText().toString());
 				XYChart.Series<Number, Number> estimatedSeries = new XYChart.Series<Number, Number>();
-				XYChart.Data<Number, Number> estimatedData = new XYChart.Data<Number, Number>(xValue,
-						getEstimatedYvalue(xValue));
-				String estimatedString = new DecimalFormat("##.##").format(getEstimatedYvalue(xValue));
+				XYChart.Data<Number, Number> estimatedData = new XYChart.Data<Number, Number>(
+						getEstimatedXvalue(yValue), yValue);
+				String estimatedString = "(" + new DecimalFormat("##.##").format(getEstimatedXvalue(yValue)) + " : "
+						+ yValue + ")";
 				Text text = new Text(estimatedString);
 				text.setFill(Color.RED);
 				text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
 				estimatedData.setNode(text);
-				estimatedSeries.setName("Est:" + txfCInputCharge.getText() + " : " + estimatedString);
+				estimatedSeries.setName("Est:" + new DecimalFormat("##.##").format(getEstimatedXvalue(yValue)) + " : "
+						+ txfCInputCharge.getText());
 				estimatedSeries.getData().add(estimatedData);
 				chartMainChart.getData().add(estimatedSeries);
 				labEstimateConcentration.setText(estimatedString);
@@ -696,9 +707,9 @@ public class GUIController implements Initializable {
 
 	/**
 	 * This is the method what calculates the linear regression of the data.
-	 * Estimated Y = Y intersect + Slope * X. \\
-	 * Slope = Variance of X / Product of the average distance to the mean of X and Y \\
-	 * Y intersect = averageY - averageX * slope \\
+	 * Estimated Y = Y intersect + Slope * X. \\ Slope = Variance of X / Product
+	 * of the average distance to the mean of X and Y \\ Y intersect = averageY
+	 * - averageX * slope \\
 	 * 
 	 * @return the XYChart Series with (0,Y intersect), (Mean of X, Mean of Y),
 	 *         and (Max X, Estimated Y).
@@ -748,8 +759,8 @@ public class GUIController implements Initializable {
 		return regression;
 	}
 
-	private Double getEstimatedYvalue(Double xValue) {
-		return dP.getYIntersect() + dP.getSlope() * xValue;
+	private Double getEstimatedXvalue(Double yValue) {
+		return (yValue - dP.getYIntersect()) / dP.getSlope();
 	}
 
 }
