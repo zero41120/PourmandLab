@@ -32,6 +32,8 @@ public class DataAnalyzer {
 					return "Type1";
 				} else if (this.checkType_2(line)) {
 					return "Type2";
+				} else if (this.checkType_3(line)) {
+					return "Type3";
 				} else if (this.checkPathFile(line)) {
 					return "PathType";
 				}
@@ -77,8 +79,14 @@ public class DataAnalyzer {
 			tempProvider.setMainList(myDataListCollections);
 			return tempProvider;
 
+		case "Type3":
+			List<DataType_3> myDataArray_3 = createDataType_3_Array(refFile);
+			dataList.setListType_3(myDataArray_3);
+			dataList.setFilePath(refFile.getAbsolutePath());
+			myDataListCollections.add(dataList);
+			tempProvider.setMainList(myDataListCollections);
+			return tempProvider;
 		case "PathType":
-
 			FileConcetrationList myFC = this.getFilesFromPathFile(refFile);
 			tempProvider.setWorkingFiles(myFC.getMyFiles());
 			tempProvider.setWorkingConcentration(myFC.getMyConcentration());
@@ -246,7 +254,9 @@ public class DataAnalyzer {
 	 * @return true if sampleString contains the signature.
 	 */
 	private boolean checkType_2(String sampleString) {
-		return sampleString.equals("\"AcquisitionMode=Episodic Stimulation\"");
+		return sampleString.equals(
+				"\"Signals=\"	\"Vm_primar\"	\"Im_sec\"	\"Vm_primar\"	\"Im_sec\"	\"Vm_primar\"	\"Im_sec\"");
+
 	}
 
 	/**
@@ -301,14 +311,35 @@ public class DataAnalyzer {
 		return temp;
 	}
 
-	private boolean checkType_3(String line) {
-		// TODO
-		return false;
+	private boolean checkType_3(String sampleString) {
+		return sampleString.equals("\"Signals=\"	\"Im_primar\"	\"Vm_sec\"");
+	}
+
+	private List<DataType_3> createDataType_3_Array(File refFile) {
+
+		List<DataType_3> myDataArray = new ArrayList<>();
+
+		try (FileInputStream readFile = new FileInputStream(refFile);
+				InputStreamReader readIn = new InputStreamReader(readFile, "UTF8")) {
+			BufferedReader ReadBuffer = new BufferedReader(readIn);
+			String line = "";
+			while ((line = ReadBuffer.readLine()) != null) {
+				if (line.equals("\"Signals=\"	\"Im_primar\"	\"Vm_sec\"")) {
+					line = ReadBuffer.readLine();
+					while ((line = ReadBuffer.readLine()) != null) {
+						myDataArray.add(createDataType_3_Object(line));
+					}
+				}
+			}
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+		return myDataArray;
 	}
 
 	private DataType_3 createDataType_3_Object(String line) {
-		DataType_3 temp = new DataType_3(1, 1, 1);
-		// TODO
+		StringTokenizer stk = new StringTokenizer(line);
+		DataType_3 temp = new DataType_3(stk.nextToken("\t"), stk.nextToken("\t"), stk.nextToken("\t"));
 		return temp;
 	}
 

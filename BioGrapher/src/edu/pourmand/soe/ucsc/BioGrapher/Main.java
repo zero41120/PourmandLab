@@ -43,8 +43,8 @@ public class Main extends Application {
 			// Alerts the user if path file exists.
 			sM.isAlertLoadPathConfirmed = GUIController.showAlertConfrimation( //
 					msg.getString("<GUITEXT>TitleConfirm"), //
-					msg.getString("<GUITEXT>HeaderConfirmLoadPathFile"), //
-					msg.getString("<GUITEXT>ContentConfirmLoadPathFile"));
+					msg.getString("<GUITEXT>HeaderConfirm_LoadPathFile"), //
+					msg.getString("<GUITEXT>ContentConfirm_LoadPathFile"));
 		}
 	}
 

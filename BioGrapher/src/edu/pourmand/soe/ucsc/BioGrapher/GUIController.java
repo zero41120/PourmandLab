@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -50,19 +51,20 @@ import static edu.pourmand.soe.ucsc.BioGrapher.Main.main;
 
 public class GUIController implements Initializable {
 	// @formatter:off
-	@FXML Button btnEdit;
-	@FXML Button btnBrowse;
-	@FXML Button btnClearData;
-	@FXML Button btnCalibrationPlot;
-	@FXML Button btnComparisonPlot;
-	@FXML Button btnEstimateConcentration;
-	@FXML Button btnReloadStatus;
-	@FXML TextField txfCInputCharge;
-	@FXML TextFlow txfwReport;
-	@FXML Label labEstimateConcentration;
-	@FXML NumberAxis charMainxAxis;
-	@FXML NumberAxis charMainyAxis;
-	@FXML ProgressBar pbMainProgressBar;
+	@FXML Menu menFile; @FXML Menu menEdit; @FXML Menu menHelp; @FXML Menu menLanguage;
+	@FXML MenuItem meitBrowse; @FXML MenuItem meitClearData;
+	@FXML MenuItem meitExportData; @FXML MenuItem meitComparsionPlot;
+	@FXML MenuItem meitCalibrationPlot; @FXML MenuItem meitPeakCurrentPlot;
+	@FXML MenuItem meitEditConcentration; @FXML MenuItem meitAbout;
+	@FXML Button btnEdit; @FXML Button btnBrowse; @FXML Button btnClearData;
+	@FXML Button btnCalibrationPlot; @FXML Button btnComparisonPlot;
+	@FXML Button btnPeakCurrentPlot; @FXML Button btnEstimateConcentration;
+	@FXML Button btnReloadStatus; 
+	@FXML TextField txfCInputCharge; @FXML TextFlow txfwReport; 
+	@FXML Label labEstimateConcentration; @FXML Label labInputCharge; 
+	@FXML TitledPane tipaConcentration; @FXML TitledPane tipaDataProviderStatus;
+	@FXML NumberAxis charMainxAxis; @FXML NumberAxis charMainyAxis;
+	@FXML ProgressBar pbMainProgressBar; 
 	@FXML LineChart<Number, Number> chartMainChart;
 	// @formatter:on
 
@@ -70,17 +72,15 @@ public class GUIController implements Initializable {
 	static Boolean calculatedLinearRegression = false;
 	static Boolean displayingCalibration = false;
 	static Boolean displayingComparision = false;
+	static Boolean displayingPeakCurrent = false;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-
+		
+		
 		// Loads all GUI texts into the GUI elements.
-		btnCalibrationPlot.setText(msg.getString("<GUITEXT>ButtonCalibration"));
-		btnComparisonPlot.setText(msg.getString("<GUITEXT>ButtonComparision"));
-		btnClearData.setText(msg.getString("<GUITEXT>ButtonClearData"));
-		btnBrowse.setText(msg.getString("<GUITEXT>ButtonBrowse"));
-		btnEdit.setText(msg.getString("<GUITEXT>ButtonEdit"));
-
+		changeLangauge(StateMachine.l);
+		
 		// Disable the buttons.
 		btnEstimateConcentration.setDisable(true);
 		btnCalibrationPlot.setDisable(true);
@@ -93,12 +93,64 @@ public class GUIController implements Initializable {
 	 * Methods below are button action methods. 
 	 * ------------------------------------------ */
 
-	public void actionCalibration2() {
-		// TODO
+	public void actionLanguage(ActionEvent event) {
+		if (event.getSource() instanceof MenuItem) {
+			MenuItem temp = (MenuItem) event.getSource();
+			java.util.Locale l = new java.util.Locale("en");
+			System.out.println(temp.getText());
+			switch (temp.getText()) {
+			case "Traditional Chinese":
+				l = new java.util.Locale("zh", "TW");
+				break;
+			case "Spanish":
+				l = new java.util.Locale("es");
+				break;
+			case "Hindi":
+				l = new java.util.Locale("hi", "IN");
+				break;
+			case "Russian":
+				l = new java.util.Locale("ru", "RU");
+				break;
+			case "Turkish":
+				l = new java.util.Locale("tr", "TR");
+				break;
+			default:
+				l = new java.util.Locale("en");
+				break;
+			}
+			changeLangauge(l);
+		}
+
 	}
-	
+
+	public void actionPeakCurrentPlot() throws Exception {
+		// Removes any graph on the screen and checks if data exists.
+		removeGraph();
+		printReport();
+		if (!isDataExists()) {
+			return;
+		}
+		displayingPeakCurrent = true;
+		// Initializes some default value for the progress counter.
+		pbMainProgressBar.setProgress(0);
+		progressCounter = 0.0;
+		// Initializes some default value for the graph.
+		chartMainChart.setCreateSymbols(false);
+		charMainxAxis.setAutoRanging(true);
+		charMainyAxis.setForceZeroInRange(false);
+
+		// Creates multiple threads to get the data from collection.
+		for (DataListCollection refDataList : dP.getDataCollection()) {
+			Thread seriesThreads = new Thread(() -> createSeries_Type_3(refDataList));
+			seriesThreads.start();
+			seriesThreads.join();
+		}
+
+	}
+
 	/**
-	 * This is the method which exports the data and estimated data to a .txt file
+	 * This is the method which exports the data and estimated data to a .txt
+	 * file
 	 */
 	public void actionExportCalibration() {
 		boolean hasType2 = false;
@@ -260,6 +312,8 @@ public class GUIController implements Initializable {
 	 * each file.
 	 */
 	public void actionEdit(ActionEvent event) {
+
+		// TODO time range
 		GUIController.showAlertConcentration(//
 				msg.getString("<GUITEXT>TitleConcentration"), //
 				msg.getString("<GUITEXT>HeaderConcentration"), //
@@ -430,7 +484,13 @@ public class GUIController implements Initializable {
 		dialog.setContentText(aContent);
 		HBox rows; // Will be created in the loop.
 		VBox cols = new VBox();
-		NumberTextField[] concentrationInputField = new NumberTextField[dP.getDataCollection().size()];
+		NumberTextField[] concentrationInputField;
+		try {
+			concentrationInputField = new NumberTextField[dP.getDataCollection().size()];
+
+		} catch (Exception e) {
+			return;
+		}
 
 		// Sets the custom button types and adds to the dialog.
 		ButtonType assignType = new ButtonType("Assign", ButtonData.OK_DONE);
@@ -571,6 +631,35 @@ public class GUIController implements Initializable {
 	 * Methods below are private helper methods.
 	 * ------------------------------------------ */
 
+	private void changeLangauge(Locale l) {
+		msg = ResourceBundle.getBundle("edu.pourmand.soe.ucsc.BioGrapher/StringBundles/SBundle", l);
+		// Loads all GUI texts into the GUI elements.
+		btnCalibrationPlot.setText(msg.getString("<GUITEXT>ButtonCalibration"));
+		btnComparisonPlot.setText(msg.getString("<GUITEXT>ButtonComparision"));
+		btnClearData.setText(msg.getString("<GUITEXT>ButtonClearData"));
+		btnBrowse.setText(msg.getString("<GUITEXT>ButtonBrowse"));
+		btnEdit.setText(msg.getString("<GUITEXT>ButtonEdit"));
+		btnPeakCurrentPlot.setText(msg.getString("<GUITEXT>ButtonPeakCurrentPlot"));
+		btnEstimateConcentration.setText(msg.getString("<GUITEXT>ButtonEstimateConcentration"));
+		btnReloadStatus.setText(msg.getString("<GUITEXT>ButtonReload"));
+		menFile.setText(msg.getString("<GUITEXT>MenuFile"));
+		menEdit.setText(msg.getString("<GUITEXT>MenuEdit"));
+		menHelp.setText(msg.getString("<GUITEXT>MenuHelp"));
+		menLanguage.setText(msg.getString("<GUITEXT>MenuLanguage"));
+		meitBrowse.setText(btnBrowse.getText());
+		meitClearData.setText(btnClearData.getText());
+		meitExportData.setText(msg.getString("<GUITEXT>MenuItemExportData"));
+		meitComparsionPlot.setText(btnComparisonPlot.getText());
+		meitCalibrationPlot.setText(btnCalibrationPlot.getText());
+		meitPeakCurrentPlot.setText(btnPeakCurrentPlot.getText());
+		meitEditConcentration.setText(btnEdit.getText());
+		meitAbout.setText(msg.getString("<GUITEXT>MenuItemAbout"));
+		labEstimateConcentration.setText(msg.getString("<GUITEXT>LabelEstimateConcentration"));
+		labInputCharge.setText(msg.getString("<GUITEXT>LabelInputCharge"));
+		tipaConcentration.setText("<GUITEXT>TitledPaneConcentration");
+		tipaDataProviderStatus.setText("<GUITEXT>TitledPaneDataProviderStatus");
+	}
+
 	/**
 	 * This is a private method that will be ran by multiple tread. This method
 	 * gets data from the reference data collection and adds it into the series.
@@ -581,7 +670,7 @@ public class GUIController implements Initializable {
 	 *            DataListCollection witch contains the data.
 	 */
 	private void createSeries_Type_1(DataListCollection refCollection) {
-		// Rejects type 2.
+		// Rejects type 1,2.
 		if (refCollection.getListType_1() == null) {
 			return;
 		}
@@ -621,7 +710,7 @@ public class GUIController implements Initializable {
 	 * @param refCollection
 	 */
 	private void createSeries_Type_2(DataListCollection refCollection) {
-		// Rejects type 1;
+		// Rejects type 1, 3;
 		if (refCollection.getListType_2() == null) {
 			return;
 		}
@@ -655,6 +744,54 @@ public class GUIController implements Initializable {
 		text.setTranslateX(45);
 		myData.setNode(text);
 
+		// Add the series in correct thread when done.
+		Platform.runLater(() -> {
+			chartMainChart.getData().add(series);
+		});
+
+	}
+
+	/**
+	 * TODO
+	 * 
+	 * @param refCollection
+	 */
+	private void createSeries_Type_3(DataListCollection refCollection) {
+		// Rejects type 1, 2;
+		if (refCollection.getListType_3() == null) {
+			return;
+		}
+
+		// Creates the series for the plots on the chart.
+		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
+		XYChart.Data<Number, Number> myData = new XYChart.Data<Number, Number>();
+		Double highPotential = -Double.MAX_VALUE, lowPotential = 0.0, difPoetnetial = 0.0, lastPotentialChange = 0.0;
+		Double highCurrent = 0.0, lowCurrent = 0.0, difCurrent = 0.0 , lastCurrentChange = 0.0;
+
+		for (DataType_3 refType_3 : refCollection.getListType_3()) {
+			lowPotential = highPotential;
+			highPotential = refType_3.getVoltage();
+			double tempDifP = highPotential - lowPotential;
+
+			lowCurrent = highCurrent;
+			highCurrent = refType_3.getCurrent();
+			double tempDifC = highCurrent - lowCurrent;
+
+			difCurrent = Math.abs(tempDifC) > 1000 ? tempDifC : difCurrent;
+			difPoetnetial = tempDifP < -1000 ? tempDifP : 0.0;
+			if (difPoetnetial < -1000) {
+				myData = new XYChart.Data<Number, Number>(refType_3.getCurrent(),refType_3.getVoltage());
+				series.getData().add(myData);
+				System.out.println("T: " + refType_3.getTime() + "\tP: " + difPoetnetial + "\tC: " + difCurrent);
+			}
+			synchronized (progressCounter) {
+				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType3());
+			}
+		}
+
+
+		series.setName(refCollection.getConcentration()+" : "+refCollection.getFileTitle());
+		
 		// Add the series in correct thread when done.
 		Platform.runLater(() -> {
 			chartMainChart.getData().add(series);

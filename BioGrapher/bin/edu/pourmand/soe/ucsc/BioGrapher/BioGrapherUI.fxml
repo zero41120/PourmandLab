@@ -13,35 +13,46 @@
 	<children>
 		<MenuBar>
 			<menus>
-				<Menu mnemonicParsing="false" text="File">
+				<Menu fx:id="menFile" mnemonicParsing="false" text="File">
 					<items>
-						<MenuItem mnemonicParsing="false" onAction="#actionBrowse" text="Browse" />
-                  <MenuItem mnemonicParsing="false" onAction="#actionClearData" text="Clear Data" />
-                  <MenuItem mnemonicParsing="false" onAction="#actionExportCalibration" text="Export Data" />
+						<MenuItem fx:id="meitBrowse" mnemonicParsing="false" onAction="#actionBrowse" text="Browse" />
+                  <MenuItem fx:id="meitClearData" mnemonicParsing="false" onAction="#actionClearData" text="Clear Data" />
+                  <MenuItem fx:id="meitExportData" mnemonicParsing="false" onAction="#actionExportCalibration" text="Export Data" />
 					</items>
 				</Menu>
-				<Menu mnemonicParsing="false" text="Edit">
+				<Menu fx:id="menEdit" mnemonicParsing="false" text="Edit">
 					<items>
-                  <MenuItem mnemonicParsing="false" onAction="#actionComparisonPlot" text="Comparsion Plot" />
-                  <MenuItem mnemonicParsing="false" onAction="#actionCalibrationPlot" text="Calibration Plot" />
-						<MenuItem mnemonicParsing="false" onAction="#actionEdit" text="Edit Concentration" />
+                  <MenuItem fx:id="meitComparsionPlot" mnemonicParsing="false" onAction="#actionComparisonPlot" text="Comparsion Plot" />
+                  <MenuItem fx:id="meitCalibrationPlot" mnemonicParsing="false" onAction="#actionCalibrationPlot" text="Calibration Plot" />
+                  <MenuItem fx:id="meitPeakCurrentPlot" mnemonicParsing="false" onAction="#actionComparisonPlot" text="Peak Current Plot" />
+						<MenuItem fx:id="meitEditConcentration" mnemonicParsing="false" onAction="#actionEdit" text="Edit Concentration" />
 					</items>
 				</Menu>
-				<Menu mnemonicParsing="false" text="Help">
+				<Menu fx:id="menHelp" mnemonicParsing="false" text="Help">
 					<items>
-						<MenuItem mnemonicParsing="false" text="About" />
+						<MenuItem fx:id="meitAbout" mnemonicParsing="false" text="About" />
 					</items>
 				</Menu>
+            <Menu fx:id="menLanguage" mnemonicParsing="false" text="Langauge">
+              <items>
+                  <MenuItem mnemonicParsing="false" onAction="#actionLanguage" text="English" />
+                  <MenuItem mnemonicParsing="false" onAction="#actionLanguage" text="Russian" />
+                <MenuItem mnemonicParsing="false" onAction="#actionLanguage" text="Spanish" />
+                  <MenuItem mnemonicParsing="false" onAction="#actionLanguage" text="Traditional Chinese" />
+                  <MenuItem mnemonicParsing="false" onAction="#actionLanguage" text="Turkish" />
+              </items>
+            </Menu>
 			</menus>
 		</MenuBar>
       <ToolBar prefHeight="40.0" prefWidth="200.0">
          <items>
-												<Button fx:id="btnBrowse" mnemonicParsing="false" onAction="#actionBrowse" prefHeight="20.0" prefWidth="100.0" text="Browse" />
+			<Button fx:id="btnBrowse" mnemonicParsing="false" onAction="#actionBrowse" prefHeight="20.0" prefWidth="100.0" text="Browse" />
             <Button fx:id="btnCalibrationPlot" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#actionCalibrationPlot" text="Calibration Plot" />
             <Button fx:id="btnComparisonPlot" layoutX="378.0" layoutY="10.0" mnemonicParsing="false" onAction="#actionComparisonPlot" text="Comparison Plot" />
+            <Button fx:id="btnPeakCurrentPlot" mnemonicParsing="false" onAction="#actionPeakCurrentPlot" prefWidth="126.0" text="Peak Current Plot" />
             <AnchorPane prefHeight="27.0" prefWidth="226.0">
                <children>
-                  <ProgressBar fx:id="pbMainProgressBar" layoutX="57.0" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <ProgressBar fx:id="pbMainProgressBar" layoutX="58.0" layoutY="-1.0" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                </children></AnchorPane>
          </items>
       </ToolBar>
@@ -55,19 +66,19 @@
       </LineChart>
       <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="299.0" prefWidth="1024.0">
          <children>
-            <TitledPane animated="false" text="Concetration">
+            <TitledPane fx:id="tipaConcentration" animated="false" text="Concetration">
                <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="161.0" prefWidth="200.0">
                      <children>
       										<Button fx:id="btnEstimateConcentration" alignment="CENTER" contentDisplay="TOP" layoutX="17.0" layoutY="76.0" mnemonicParsing="false" onAction="#actionEstimateConcentration" text="Estimate Concentration" AnchorPane.leftAnchor="0.0" />
-      												<Label layoutX="2.0" layoutY="6.0" text="Input Charge (nA):" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
+      												<Label fx:id="labInputCharge" layoutX="2.0" layoutY="6.0" text="Input Charge (nA):" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
       												<TextField fx:id="txfCInputCharge" layoutX="16.0" layoutY="40.0" AnchorPane.leftAnchor="0.0" />
                         <Label fx:id="labEstimateConcentration" layoutX="26.0" layoutY="112.0" prefHeight="27.0" prefWidth="167.0" text="" AnchorPane.leftAnchor="0.0" />
                      </children>
                   </AnchorPane>
                </content>
             </TitledPane>
-            <TitledPane animated="false" prefHeight="175.0" prefWidth="821.0" text="Data Provider Status">
+            <TitledPane fx:id="tipaDataProviderStatus" animated="false" prefHeight="175.0" prefWidth="821.0" text="Data Provider Status">
               <content>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="162.0" prefWidth="600.0">
                      <children>

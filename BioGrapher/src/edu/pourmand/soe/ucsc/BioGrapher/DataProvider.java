@@ -44,6 +44,18 @@ class DataProvider {
 		}
 		return counterT2;
 	}
+	
+	public Double getFileSizeType3() {
+		Double counterT3 = 0.0;
+		if (getDataCollection() != null) {
+			for (DataListCollection dataList : mainList) {
+				if (dataList.getListType_3() != null) {
+					counterT3 += dataList.getListType_3().size();
+				}
+			}
+		}
+		return counterT3;
+	}
 
 	/**
 	 * This is the method which returns the remaining size of the workinFiles
