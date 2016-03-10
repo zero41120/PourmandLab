@@ -23,7 +23,8 @@
 				<Menu fx:id="menEdit" mnemonicParsing="false" text="Edit">
 					<items>
                   <MenuItem fx:id="meitComparsionPlot" mnemonicParsing="false" onAction="#actionComparisonPlot" text="Comparsion Plot" />
-                  <MenuItem fx:id="meitCalibrationPlot" mnemonicParsing="false" onAction="#actionCalibrationPlot" text="Calibration Plot" />
+                  <MenuItem fx:id="meitComparsionPlot" mnemonicParsing="false" onAction="#actionComparisonPlot" text="Comparsion Plot" />
+                  <MenuItem fx:id="meitCalibrationPlot" mnemonicParsing="false" onAction="#actionCalibrationPlot_Type2" text="Calibration Plot" />
                   <MenuItem fx:id="meitPeakCurrentPlot" mnemonicParsing="false" onAction="#actionComparisonPlot" text="Peak Current Plot" />
 						<MenuItem fx:id="meitEditConcentration" mnemonicParsing="false" onAction="#actionEdit" text="Edit Concentration" />
 					</items>
@@ -40,6 +41,7 @@
                 <MenuItem mnemonicParsing="false" onAction="#actionLanguage" text="Spanish" />
                   <MenuItem mnemonicParsing="false" onAction="#actionLanguage" text="Traditional Chinese" />
                   <MenuItem mnemonicParsing="false" onAction="#actionLanguage" text="Turkish" />
+                  <MenuItem mnemonicParsing="false" onAction="#actionLanguage" text="Hindi" />
               </items>
             </Menu>
 			</menus>
@@ -47,13 +49,10 @@
       <ToolBar prefHeight="40.0" prefWidth="200.0">
          <items>
 			<Button fx:id="btnBrowse" mnemonicParsing="false" onAction="#actionBrowse" prefHeight="20.0" prefWidth="100.0" text="Browse" />
-            <Button fx:id="btnCalibrationPlot" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#actionCalibrationPlot" text="Calibration Plot" />
-            <Button fx:id="btnComparisonPlot" layoutX="378.0" layoutY="10.0" mnemonicParsing="false" onAction="#actionComparisonPlot" text="Comparison Plot" />
-            <Button fx:id="btnPeakCurrentPlot" mnemonicParsing="false" onAction="#actionPeakCurrentPlot" prefWidth="126.0" text="Peak Current Plot" />
-            <AnchorPane prefHeight="27.0" prefWidth="226.0">
-               <children>
-                  <ProgressBar fx:id="pbMainProgressBar" layoutX="58.0" layoutY="-1.0" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-               </children></AnchorPane>
+            <Button fx:id="btnComparisonPlot" layoutX="378.0" layoutY="10.0" mnemonicParsing="false" onAction="#actionComparisonPlot" text="CHI1030C Comparison" />
+            <Button fx:id="btnCalibrationType1" layoutX="230.0" layoutY="10.0" mnemonicParsing="false" onAction="#actionCalibrationPlot_Type1" text="CHI1030C Calibration" />
+            <Button fx:id="btnCalibrationType2" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#actionCalibrationPlot_Type2" text="GFP Calibration" />
+            <Button fx:id="btnPeakCurrentPlot" mnemonicParsing="false" onAction="#actionPeakCurrentPlot" text="GFP Peak Current" />
          </items>
       </ToolBar>
       <LineChart fx:id="chartMainChart" legendSide="RIGHT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="40.0" minWidth="80.0" prefHeight="650.0">
@@ -86,6 +85,7 @@
                         <Button fx:id="btnReloadStatus" layoutX="100.0" layoutY="115.0" mnemonicParsing="false" onAction="#actionReloadStatus" text="Reload Status" AnchorPane.bottomAnchor="0.0" />
                         <Button fx:id="btnEdit" layoutX="250.0" layoutY="105.0" mnemonicParsing="false" onAction="#actionEdit" prefHeight="20.0" prefWidth="100.0" text="Edit" AnchorPane.bottomAnchor="0.0" />
             												<Button fx:id="btnClearData" layoutX="403.0" layoutY="105.0" mnemonicParsing="false" onAction="#actionClearData" prefHeight="20.0" prefWidth="100.0" text="Clear Data" AnchorPane.bottomAnchor="0.0" />
+                        <ProgressBar fx:id="pbMainProgressBar" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
                      </children>
                   </AnchorPane>
               </content>

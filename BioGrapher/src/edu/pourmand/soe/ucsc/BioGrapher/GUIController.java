@@ -57,9 +57,9 @@ public class GUIController implements Initializable {
 	@FXML MenuItem meitCalibrationPlot; @FXML MenuItem meitPeakCurrentPlot;
 	@FXML MenuItem meitEditConcentration; @FXML MenuItem meitAbout;
 	@FXML Button btnEdit; @FXML Button btnBrowse; @FXML Button btnClearData;
-	@FXML Button btnCalibrationPlot; @FXML Button btnComparisonPlot;
+	@FXML Button btnCalibrationType2; @FXML Button btnComparisonPlot;
+	@FXML Button btnCalibrationType1; @FXML Button btnReloadStatus; 
 	@FXML Button btnPeakCurrentPlot; @FXML Button btnEstimateConcentration;
-	@FXML Button btnReloadStatus; 
 	@FXML TextField txfCInputCharge; @FXML TextFlow txfwReport; 
 	@FXML Label labEstimateConcentration; @FXML Label labInputCharge; 
 	@FXML TitledPane tipaConcentration; @FXML TitledPane tipaDataProviderStatus;
@@ -69,22 +69,24 @@ public class GUIController implements Initializable {
 	// @formatter:on
 
 	static Double progressCounter = 0.0;
-	static Boolean calculatedLinearRegression = false;
-	static Boolean displayingCalibration = false;
+	static Boolean disPlayingLinearRegression = false;
+	static Boolean displayingCalibration_Type2 = false;
+	static Boolean displayingCalibration_Type1 = false;
 	static Boolean displayingComparision = false;
 	static Boolean displayingPeakCurrent = false;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		
-		
+
 		// Loads all GUI texts into the GUI elements.
 		changeLangauge(StateMachine.l);
-		
+
 		// Disable the buttons.
 		btnEstimateConcentration.setDisable(true);
-		btnCalibrationPlot.setDisable(true);
+		btnCalibrationType1.setDisable(true);
+		btnCalibrationType2.setDisable(true);
 		btnComparisonPlot.setDisable(true);
+		btnPeakCurrentPlot.setDisable(true);
 		btnClearData.setDisable(true);
 		btnEdit.setDisable(true);
 	}
@@ -165,9 +167,9 @@ public class GUIController implements Initializable {
 			return;
 		}
 		// check calibration, run it if needed
-		if (!displayingCalibration) {
+		if (!displayingCalibration_Type2) {
 			try {
-				actionCalibrationPlot();
+				actionCalibrationPlot_Type2();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -212,21 +214,26 @@ public class GUIController implements Initializable {
 		txfCInputCharge.setText("");
 		labEstimateConcentration.setText("");
 		btnEstimateConcentration.setDisable(true);
-		calculatedLinearRegression = false;
+		disPlayingLinearRegression = false;
+
 		if (dP.getDataCollection() != null) {
 			pbMainProgressBar.setProgress(progressCounter = 0.0);
 			btnClearData.setDisable(false);
 			btnEdit.setDisable(false);
 			for (DataListCollection refDataCollection : dP.getDataCollection()) {
-				// Buttons are enabled, no longer need to check the provider.
-				if (!btnCalibrationPlot.isDisable() && !btnComparisonPlot.isDisable())
-					break;
 				// Collection has type1, then enables the Comparison button
-				if (btnComparisonPlot.isDisable() && refDataCollection.getListType_1() != null)
+				if (btnComparisonPlot.isDisable() && refDataCollection.getListType_1() != null) {
 					btnComparisonPlot.setDisable(false);
-				// Collection has type1, then enables the Calibration button
-				if (btnCalibrationPlot.isDisable() && refDataCollection.getListType_2() != null)
-					btnCalibrationPlot.setDisable(false);
+					btnCalibrationType1.setDisable(false);
+				}
+				// Collection has type2, then enables the Calibration button
+				if (btnCalibrationType2.isDisable() && refDataCollection.getListType_2() != null) {
+					btnCalibrationType2.setDisable(false);
+				}
+				// Collection has type3, then enables the Peak Current button
+				if (btnPeakCurrentPlot.isDisabled() && refDataCollection.getListType_3() != null) {
+					btnPeakCurrentPlot.setDisable(false);
+				}
 			}
 
 		}
@@ -234,17 +241,43 @@ public class GUIController implements Initializable {
 		printReport();
 	}
 
-	/**
-	 * This is the button action method which graphs the calibration plot
-	 */
-	public void actionCalibrationPlot() throws InterruptedException {
+	public void actionCalibrationPlot_Type1() throws InterruptedException {
 		// Removes any graph on the screen and checks if data exists.
 		removeGraph();
 		printReport();
 		if (!isDataExists()) {
 			return;
 		}
-		displayingCalibration = true;
+		showAlertVoltage("asdf", "asdf", "413");
+		displayingCalibration_Type1 = true;
+		// Enables Estimate button.
+		btnEstimateConcentration.setDisable(false);
+		// Initializes some default value for the progress counter.
+		pbMainProgressBar.setProgress(0);
+		progressCounter = 0.0;
+		// Initializes some default value for the graph.
+		chartMainChart.setCreateSymbols(false);
+		charMainxAxis.setAutoRanging(true);
+		charMainyAxis.setForceZeroInRange(false);
+
+		// Creates multiple threads to get the data from collection.
+		for (DataListCollection refDataList : dP.getDataCollection()) {
+			Thread seriesThreads = new Thread(() -> createSeries_Type_1_Calibration(refDataList));
+			seriesThreads.start();
+		}
+	}
+
+	/**
+	 * This is the button action method which graphs the calibration plot
+	 */
+	public void actionCalibrationPlot_Type2() throws InterruptedException {
+		// Removes any graph on the screen and checks if data exists.
+		removeGraph();
+		printReport();
+		if (!isDataExists()) {
+			return;
+		}
+		displayingCalibration_Type2 = true;
 		// Enables Estimate button.
 		btnEstimateConcentration.setDisable(false);
 		// Initializes some default value for the progress counter.
@@ -302,7 +335,7 @@ public class GUIController implements Initializable {
 
 		// Creates multiple threads to get the data from collection.
 		for (DataListCollection refDataList : dP.getDataCollection()) {
-			Thread seriesThreads = new Thread(() -> createSeries_Type_1(refDataList));
+			Thread seriesThreads = new Thread(() -> createSeries_Type_1_Comparison(refDataList));
 			seriesThreads.start();
 		}
 	}
@@ -330,6 +363,7 @@ public class GUIController implements Initializable {
 		FileChooser chooser = new FileChooser();
 		chooser.setTitle(msg.getString("<GUITEXT>TitleOpenFile"));
 		List<File> fileList = chooser.showOpenMultipleDialog(refStage);
+		disPlayingLinearRegression = false;
 
 		// Execute the state machine when the program receives files
 		if (fileList != null) {
@@ -349,7 +383,10 @@ public class GUIController implements Initializable {
 					btnComparisonPlot.setDisable(false);
 				}
 				if (refDataList.getListType_2() != null) {
-					btnCalibrationPlot.setDisable(false);
+					btnCalibrationType2.setDisable(false);
+				}
+				if (refDataList.getListType_3() != null) {
+					btnPeakCurrentPlot.setDisable(false);
 				}
 			}
 		}
@@ -366,8 +403,8 @@ public class GUIController implements Initializable {
 		// Prompts the user to confirm to clear data
 		boolean isConfirmed = showAlertConfrimation(//
 				msg.getString("<GUITEXT>TitleConfirm"), //
-				msg.getString("<GUITEXT>HeaderConfirmLoadPathFile"), //
-				msg.getString("<GUITEXT>ContentConfirmClearData"));
+				msg.getString("<GUITEXT>HeaderConfirm_LoadPathFile"), //
+				msg.getString("<GUITEXT>ContentConfirm_ClearData"));
 		sM.isAlertClearDataComirmed = isConfirmed;
 
 		// Disables the button and clears all data in the provider.
@@ -376,14 +413,14 @@ public class GUIController implements Initializable {
 			pbMainProgressBar.setProgress(0);
 			txfCInputCharge.setText("");
 			labEstimateConcentration.setText("");
-			calculatedLinearRegression = false;
 
+			btnPeakCurrentPlot.setDisable(true);
 			btnEstimateConcentration.setDisable(true);
-			btnCalibrationPlot.setDisable(true);
+			btnCalibrationType2.setDisable(true);
 			btnComparisonPlot.setDisable(true);
 			btnClearData.setDisable(true);
 			btnEdit.setDisable(true);
-			calculatedLinearRegression = false;
+			disPlayingLinearRegression = false;
 			main.executeStateMachine();
 			printReport();
 		}
@@ -395,9 +432,11 @@ public class GUIController implements Initializable {
 	 */
 	public void actionEstimateConcentration() {
 		// Calculates linear regression
-		if (!calculatedLinearRegression) {
+		if (!disPlayingLinearRegression) {
 			chartMainChart.getData().add(calculateLinearRegression());
+			disPlayingLinearRegression = true;
 		}
+
 		// Adds the estimate value on the graph and label
 		if (!txfCInputCharge.getText().isEmpty()) {
 			System.out.println(txfCInputCharge.getText().toString());
@@ -460,6 +499,66 @@ public class GUIController implements Initializable {
 		}
 
 		return false;
+	}
+
+	public static void showAlertVoltage(String aTitle, String aHeader, String aContent) {
+		// Creates a custom dialog and the fields.
+		Dialog<List<Double>> dialog = new Dialog<>();
+		dialog.setTitle(aTitle);
+		dialog.setHeaderText(aHeader);
+		dialog.setContentText(aContent);
+		HBox rows = new HBox();
+		Boolean[] agreement = new Boolean[1];
+		agreement[0] = false;
+		NumberTextField concentrationInputField = new NumberTextField();
+		concentrationInputField.setPromptText("Voltage");
+
+		// Sets the custom button types and adds to the dialog.
+		ButtonType assignType = new ButtonType("Assign", ButtonData.OK_DONE);
+		ButtonType cancelType = new ButtonType("Cancel", ButtonData.CANCEL_CLOSE);
+		dialog.getDialogPane().getButtonTypes().addAll(assignType, cancelType);
+
+		// Gets the reference of the buttons.
+		Node btnAssign = dialog.getDialogPane().lookupButton(assignType);
+
+		concentrationInputField.textProperty().addListener((observable, oldValue, newValue) -> {
+			agreement[0] = new Boolean(!newValue.trim().isEmpty());
+			btnAssign.setDisable(!agreement[0]);
+		});
+
+		btnAssign.setDisable(!agreement[0]);
+
+		// Loads everything into the dialog.
+		rows.getChildren().add(concentrationInputField);
+		dialog.getDialogPane().setContent(rows);
+
+		// When a button is clicked
+		dialog.setResultConverter(dialogButton -> {
+			if (dialogButton == assignType) {
+
+				Double concentration = Double.parseDouble(concentrationInputField.getText());
+				dP.setType1Concetration(concentration);
+				// Converts the result to a list isPresent().
+				List<Double> returnConcentration = new ArrayList<>();
+				returnConcentration.add(Double.parseDouble(concentrationInputField.getText()));
+				return returnConcentration;
+
+			} else if (dialogButton == cancelType) {
+				dP.setType1Concetration(null);
+			}
+			return null;
+		});
+
+		// Displays the dialog.
+		Optional<List<Double>> result = dialog.showAndWait();
+
+		// Sysouts the numbers in the text fields.
+		// We can further implement new function to this.
+		result.ifPresent(refList -> {
+			for (Double myDouble : refList) {
+				System.out.println(myDouble);
+			}
+		});
 	}
 
 	/**
@@ -634,7 +733,7 @@ public class GUIController implements Initializable {
 	private void changeLangauge(Locale l) {
 		msg = ResourceBundle.getBundle("edu.pourmand.soe.ucsc.BioGrapher/StringBundles/SBundle", l);
 		// Loads all GUI texts into the GUI elements.
-		btnCalibrationPlot.setText(msg.getString("<GUITEXT>ButtonCalibration"));
+		btnCalibrationType2.setText(msg.getString("<GUITEXT>ButtonCalibration"));
 		btnComparisonPlot.setText(msg.getString("<GUITEXT>ButtonComparision"));
 		btnClearData.setText(msg.getString("<GUITEXT>ButtonClearData"));
 		btnBrowse.setText(msg.getString("<GUITEXT>ButtonBrowse"));
@@ -650,14 +749,50 @@ public class GUIController implements Initializable {
 		meitClearData.setText(btnClearData.getText());
 		meitExportData.setText(msg.getString("<GUITEXT>MenuItemExportData"));
 		meitComparsionPlot.setText(btnComparisonPlot.getText());
-		meitCalibrationPlot.setText(btnCalibrationPlot.getText());
+		meitCalibrationPlot.setText(btnCalibrationType2.getText());
 		meitPeakCurrentPlot.setText(btnPeakCurrentPlot.getText());
 		meitEditConcentration.setText(btnEdit.getText());
 		meitAbout.setText(msg.getString("<GUITEXT>MenuItemAbout"));
 		labEstimateConcentration.setText(msg.getString("<GUITEXT>LabelEstimateConcentration"));
 		labInputCharge.setText(msg.getString("<GUITEXT>LabelInputCharge"));
-		tipaConcentration.setText("<GUITEXT>TitledPaneConcentration");
-		tipaDataProviderStatus.setText("<GUITEXT>TitledPaneDataProviderStatus");
+		tipaConcentration.setText(msg.getString("<GUITEXT>TitledPaneConcentration"));
+		tipaDataProviderStatus.setText(msg.getString("<GUITEXT>TitledPaneDataProviderStatus"));
+	}
+
+	private void createSeries_Type_1_Calibration(DataListCollection refCollection) {
+		if (refCollection.getListType_1() == null) {
+			return;
+		}
+
+		// Creates the series for the plots on the chart.
+		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
+		series.setName(refCollection.getConcentration() + " : " + refCollection.getFileTitle());
+		XYChart.Data<Number, Number> myData = new XYChart.Data<>();
+		String value = "";
+		// Gets data from the reference file and updates the progress bar.
+		for (DataType_1 refType_1 : refCollection.getListType_1()) {
+			if (refType_1.getVoltage() == dP.getType1Voltage()) {
+				myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(), refType_1.getCurrnet());
+				series.getData().add(myData);
+				value = "      (" + refCollection.getConcentration().toString() + " : "
+						+ new DecimalFormat("##.##").format(refType_1.getCurrnet()) + ")";
+				System.out.println(value);
+
+			}
+			synchronized (progressCounter) {
+				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType1());
+			}
+		}
+
+		// Creates the label on the plots
+		Text text = new Text(value);
+		text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
+		myData.setNode(text);
+
+		// Add the series in correct thread when done.
+		Platform.runLater(() -> {
+			chartMainChart.getData().add(series);
+		});
 	}
 
 	/**
@@ -669,7 +804,7 @@ public class GUIController implements Initializable {
 	 * @param refCollection
 	 *            DataListCollection witch contains the data.
 	 */
-	private void createSeries_Type_1(DataListCollection refCollection) {
+	private void createSeries_Type_1_Comparison(DataListCollection refCollection) {
 		// Rejects type 1,2.
 		if (refCollection.getListType_1() == null) {
 			return;
@@ -765,33 +900,49 @@ public class GUIController implements Initializable {
 		// Creates the series for the plots on the chart.
 		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
 		XYChart.Data<Number, Number> myData = new XYChart.Data<Number, Number>();
-		Double highPotential = -Double.MAX_VALUE, lowPotential = 0.0, difPoetnetial = 0.0, lastPotentialChange = 0.0;
-		Double highCurrent = 0.0, lowCurrent = 0.0, difCurrent = 0.0 , lastCurrentChange = 0.0;
-
+		Double newCurrent = -Double.MAX_VALUE, oldCurrent = 0.0, omnCurrent = 0.0, nmoCurrent, lastCurrentChange = 0.0;
+		Double xEP = -1000.0, de = 1.0, nu = 0.0, average = 0.0;
 		for (DataType_3 refType_3 : refCollection.getListType_3()) {
-			lowPotential = highPotential;
-			highPotential = refType_3.getVoltage();
-			double tempDifP = highPotential - lowPotential;
-
-			lowCurrent = highCurrent;
-			highCurrent = refType_3.getCurrent();
-			double tempDifC = highCurrent - lowCurrent;
-
-			difCurrent = Math.abs(tempDifC) > 1000 ? tempDifC : difCurrent;
-			difPoetnetial = tempDifP < -1000 ? tempDifP : 0.0;
-			if (difPoetnetial < -1000) {
-				myData = new XYChart.Data<Number, Number>(refType_3.getCurrent(),refType_3.getVoltage());
-				series.getData().add(myData);
-				System.out.println("T: " + refType_3.getTime() + "\tP: " + difPoetnetial + "\tC: " + difCurrent);
+			oldCurrent = newCurrent;
+			newCurrent = refType_3.getCurrent();
+			omnCurrent = oldCurrent - newCurrent;
+			nmoCurrent = newCurrent - oldCurrent;
+			lastCurrentChange = nmoCurrent > 15000 ? nmoCurrent : 0.0;
+			if (omnCurrent > 1000) { // small gap
+				nu += omnCurrent;
+				de++;
 			}
+			if (lastCurrentChange != 0.0) { // big gap
+				nu = 0.0;
+				xEP += 200;
+			}
+
+			if (de == 4.0) {
+				if (omnCurrent > 60000.0) {
+					break;
+				}
+				average = nu / de;
+				myData = new XYChart.Data<Number, Number>(xEP, average);
+				// Creates the label on the plots
+				String value = "(" + xEP + " : ";
+				value += new DecimalFormat("##.##").format(average) + ")";
+				Text text = new Text(value);
+				text.setTranslateY(-10 + text.getLayoutBounds().getHeight() / 2);
+				text.setTranslateX(45);
+				myData.setNode(text);
+				series.getData().add(myData);
+				// System.out.println("T: " + refType_3.getTime() + " xEP:" +
+				// xEP + "\tC: " + omnCurrent);
+				de = 0.0;
+			}
+
 			synchronized (progressCounter) {
 				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType3());
 			}
 		}
 
+		series.setName(refCollection.getConcentration() + " : " + refCollection.getFileTitle());
 
-		series.setName(refCollection.getConcentration()+" : "+refCollection.getFileTitle());
-		
 		// Add the series in correct thread when done.
 		Platform.runLater(() -> {
 			chartMainChart.getData().add(series);
@@ -813,7 +964,7 @@ public class GUIController implements Initializable {
 					msg.getString("<GUITEXT>ContentError_NoDataFound"), //
 					new Exception("No data found"));
 			btnComparisonPlot.setDisable(true);
-			btnCalibrationPlot.setDisable(true);
+			btnCalibrationType2.setDisable(true);
 			return false;
 		}
 		return true;
@@ -823,8 +974,11 @@ public class GUIController implements Initializable {
 	 * This is a private method that removes all data on the chart.
 	 */
 	private void removeGraph() {
-		displayingCalibration = false;
+		displayingCalibration_Type2 = false;
+		displayingCalibration_Type1 = false;
+		displayingPeakCurrent = false;
 		displayingComparision = false;
+		disPlayingLinearRegression = false;
 		while (!chartMainChart.getData().isEmpty()) {
 			chartMainChart.getData().remove(chartMainChart.getData().size() - 1);
 		}
@@ -892,7 +1046,6 @@ public class GUIController implements Initializable {
 		regression.getData().add(new XYChart.Data<Number, Number>(xMax, yIntersect + slope * xMax));
 		regression.setName("Linear regression");
 
-		calculatedLinearRegression = true;
 		return regression;
 	}
 

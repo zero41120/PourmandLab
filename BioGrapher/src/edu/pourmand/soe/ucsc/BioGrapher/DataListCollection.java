@@ -128,16 +128,16 @@ class DataType_3{
 	private double voltage;
 	private double current;
 	
-	protected DataType_3(double time, double voltage, double current) {
+	protected DataType_3(double time, double current, double voltage) {
 		this.time = time;
-		this.voltage = voltage;
 		this.current = current;
+		this.voltage = voltage;
 	}
 	
-	protected DataType_3(String time, String voltage, String current) {
+	protected DataType_3(String time, String current, String voltage) {
 		this.time = Double.parseDouble(time);
-		this.voltage = Double.parseDouble(voltage);
 		this.current = Double.parseDouble(current);
+		this.voltage = Double.parseDouble(voltage);
 	}
 	
 	public double getTime() {

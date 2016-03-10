@@ -16,6 +16,7 @@ class DataProvider {
 	private boolean isVariableValid = false;
 	private Double yIntersect;
 	private Double slope;
+	private Double type1Voltage = null;
 
 	public Double getFileSizeType1() {
 		Double counterT1 = 0.0;
@@ -249,6 +250,14 @@ class DataProvider {
 	
 	public void setSlope(Double slope) {
 		this.slope = slope;
+	}
+
+	public Double getType1Voltage() {
+		return type1Voltage;
+	}
+
+	public void setType1Concetration(Double type1Concetration) {
+		this.type1Voltage = type1Concetration;
 	}
 
 }
