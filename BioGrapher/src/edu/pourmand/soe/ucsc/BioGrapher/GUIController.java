@@ -5,6 +5,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -29,6 +30,9 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+
+import static java.lang.System.out;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -46,34 +50,53 @@ import edu.pourmand.soe.ucsc.BioGrapher.StateMachine.States;
 import static edu.pourmand.soe.ucsc.BioGrapher.DataProvider.dP;
 import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.sM;
 import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.msg;
-import static edu.pourmand.soe.ucsc.BioGrapher.Main.refStage;
-import static edu.pourmand.soe.ucsc.BioGrapher.Main.main;
 
 public class GUIController implements Initializable {
 	// @formatter:off
-	@FXML Menu menFile; @FXML Menu menEdit; @FXML Menu menHelp; @FXML Menu menLanguage;
-	@FXML MenuItem meitBrowse; @FXML MenuItem meitClearData;
-	@FXML MenuItem meitExportData; @FXML MenuItem meitComparsionPlot;
-	@FXML MenuItem meitCalibrationPlot; @FXML MenuItem meitPeakCurrentPlot;
-	@FXML MenuItem meitEditConcentration; @FXML MenuItem meitAbout;
-	@FXML Button btnEdit; @FXML Button btnBrowse; @FXML Button btnClearData;
-	@FXML Button btnCalibrationType2; @FXML Button btnComparisonPlot;
-	@FXML Button btnCalibrationType1; @FXML Button btnReloadStatus; 
-	@FXML Button btnPeakCurrentPlot; @FXML Button btnEstimateConcentration;
-	@FXML TextField txfCInputCharge; @FXML TextFlow txfwReport; 
-	@FXML Label labEstimateConcentration; @FXML Label labInputCharge; 
-	@FXML TitledPane tipaConcentration; @FXML TitledPane tipaDataProviderStatus;
-	@FXML NumberAxis charMainxAxis; @FXML NumberAxis charMainyAxis;
+	@FXML Menu menFile; 
+	@FXML Menu menEdit; 
+	@FXML Menu menHelp; 
+	@FXML Menu menLanguage;
+	@FXML MenuItem meitBrowse; 
+	@FXML MenuItem meitClearData;
+	@FXML MenuItem meitExportData; 
+	@FXML MenuItem meitPlot1;
+	@FXML MenuItem meitPlot2; 
+	@FXML MenuItem meitPlot3;
+	@FXML MenuItem meitPlot4; 
+	@FXML MenuItem meitEdit;
+	@FXML MenuItem meitAbout;
+	@FXML Button btnEdit; 
+	@FXML Button btnBrowse; 
+	@FXML Button btnClearData;
+	@FXML Button btnCalibrationType2; 
+	@FXML Button btnComparisonPlot;
+	@FXML Button btnCalibrationType1; 
+	@FXML Button btnReloadStatus; 
+	@FXML Button btnPeakCurrentPlot; 
+	@FXML Button btnEstimateConcentration;
+	@FXML TextField txfCInputCharge; 
+	@FXML TextFlow txfwReport; 
+	@FXML Label labEstimateConcentration; 
+	@FXML Label labInputCharge; 
+	@FXML TitledPane tipaConcentration; 
+	@FXML TitledPane tipaDataProviderStatus;
+	@FXML NumberAxis charMainxAxis; 
+	@FXML NumberAxis charMainyAxis;
 	@FXML ProgressBar pbMainProgressBar; 
 	@FXML LineChart<Number, Number> chartMainChart;
 	// @formatter:on
 
+	static Exception globalException = new Exception("Default Error");
 	static Double progressCounter = 0.0;
 	static Boolean disPlayingLinearRegression = false;
 	static Boolean displayingCalibration_Type2 = false;
 	static Boolean displayingCalibration_Type1 = false;
 	static Boolean displayingComparision = false;
 	static Boolean displayingPeakCurrent = false;
+	static DataFileManager fM = new DataFileManager();
+	static File myFile = null;
+	static Stage refStage = null;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -82,19 +105,17 @@ public class GUIController implements Initializable {
 		changeLangauge(StateMachine.l);
 
 		// Disable the buttons.
-		btnEstimateConcentration.setDisable(true);
-		btnCalibrationType1.setDisable(true);
-		btnCalibrationType2.setDisable(true);
-		btnComparisonPlot.setDisable(true);
-		btnPeakCurrentPlot.setDisable(true);
-		btnClearData.setDisable(true);
-		btnEdit.setDisable(true);
+		disableFunctionButtons();
+
 	}
 
 	/* ------------------------------------------
 	 * Methods below are button action methods. 
 	 * ------------------------------------------ */
 
+	/**
+	 * This is the method which changes the language of the program.
+	 */
 	public void actionLanguage(ActionEvent event) {
 		if (event.getSource() instanceof MenuItem) {
 			MenuItem temp = (MenuItem) event.getSource();
@@ -116,6 +137,9 @@ public class GUIController implements Initializable {
 			case "Turkish":
 				l = new java.util.Locale("tr", "TR");
 				break;
+			case "Arabic":
+				l = new java.util.Locale("ar");
+				break;
 			default:
 				l = new java.util.Locale("en");
 				break;
@@ -125,65 +149,22 @@ public class GUIController implements Initializable {
 
 	}
 
-	public void actionPeakCurrentPlot() throws Exception {
-		// Removes any graph on the screen and checks if data exists.
-		removeGraph();
-		printReport();
-		if (!isDataExists()) {
-			return;
-		}
-		displayingPeakCurrent = true;
-		// Initializes some default value for the progress counter.
-		pbMainProgressBar.setProgress(0);
-		progressCounter = 0.0;
-		// Initializes some default value for the graph.
-		chartMainChart.setCreateSymbols(false);
-		charMainxAxis.setAutoRanging(true);
-		charMainyAxis.setForceZeroInRange(false);
-
-		// Creates multiple threads to get the data from collection.
-		for (DataListCollection refDataList : dP.getDataCollection()) {
-			Thread seriesThreads = new Thread(() -> createSeries_Type_3(refDataList));
-			seriesThreads.start();
-			seriesThreads.join();
-		}
-
-	}
 
 	/**
-	 * This is the method which exports the data and estimated data to a .txt
-	 * file
+	 * This is the method which exports the data on the graph to a .txt
+	 * file.
 	 */
 	public void actionExportCalibration() {
-		boolean hasType2 = false;
-		for (DataListCollection d : dP.getDataCollection()) {
-			if (d.getListType_2() != null) {
-				hasType2 = true;
-			}
-		}
-		if (!hasType2) {
-			showAlertError("Error", "No type 2 data found", "Please enter type 2 files in to the program.",
-					new Exception("Missing Data"));
-			return;
-		}
-		// check calibration, run it if needed
-		if (!displayingCalibration_Type2) {
-			try {
-				actionCalibrationPlot_Type2();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
 
 		DirectoryChooser chooser = new DirectoryChooser();
-		chooser.setTitle("Select Location"); // TODO GUI text
+		chooser.setTitle("Select Location");
 		File selectedDirectory = chooser.showDialog(refStage);
 		try {
 			DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 			String fileName = "Biographer_Export_" + dateFormat.format(new Date()) + ".txt";
 			FileWriter writeFile = new FileWriter(new File(selectedDirectory, fileName));
 			PrintWriter writerPrint = new PrintWriter(writeFile);
-			writerPrint.println("Title\tConcetration\tData");
+			writerPrint.println("Lengend Title\t" + charMainxAxis.getLabel() + "\t" + charMainyAxis.getLabel());
 			for (Series<Number, Number> series : chartMainChart.getData()) {
 				for (Data<Number, Number> data : series.getData()) {
 					writerPrint.println(series.getName() + "\t" + new DecimalFormat("##.##").format(data.getXValue())
@@ -195,7 +176,6 @@ public class GUIController implements Initializable {
 			System.out.println("Created Export"); // TODO message bundles
 			writerPrint.close();
 		} catch (Exception e) {
-			// TODO should delete the file if exists
 			System.out.println(e);
 		}
 	}
@@ -214,33 +194,38 @@ public class GUIController implements Initializable {
 		txfCInputCharge.setText("");
 		labEstimateConcentration.setText("");
 		btnEstimateConcentration.setDisable(true);
-		disPlayingLinearRegression = false;
-
-		if (dP.getDataCollection() != null) {
-			pbMainProgressBar.setProgress(progressCounter = 0.0);
-			btnClearData.setDisable(false);
-			btnEdit.setDisable(false);
-			for (DataListCollection refDataCollection : dP.getDataCollection()) {
-				// Collection has type1, then enables the Comparison button
-				if (btnComparisonPlot.isDisable() && refDataCollection.getListType_1() != null) {
-					btnComparisonPlot.setDisable(false);
-					btnCalibrationType1.setDisable(false);
-				}
-				// Collection has type2, then enables the Calibration button
-				if (btnCalibrationType2.isDisable() && refDataCollection.getListType_2() != null) {
-					btnCalibrationType2.setDisable(false);
-				}
-				// Collection has type3, then enables the Peak Current button
-				if (btnPeakCurrentPlot.isDisabled() && refDataCollection.getListType_3() != null) {
-					btnPeakCurrentPlot.setDisable(false);
-				}
-			}
-
-		}
+		enableFunctionButtons();
 		// Update the report on screen
 		printReport();
 	}
+	/**
+	 * This is the method which graphs the Peak Current Plot.
+	 */
+	public void actionPeakCurrentPlot() throws Exception {
+		// Removes any graph on the screen and checks if data exists.
+		removeGraph();
+		printReport();
+		if (!isDataExists())
+			return;
 
+		// Initializes some default value for the progress.
+		displayingPeakCurrent = true;
+		pbMainProgressBar.setProgress(0);
+		progressCounter = 0.0;
+		// Initializes some default value for the graph.
+		chartMainChart.setCreateSymbols(false);
+		charMainxAxis.setAutoRanging(true);
+		charMainyAxis.setForceZeroInRange(false);
+		charMainxAxis.setLabel("Voltage (mV)");
+		charMainyAxis.setLabel("Current (nA)");
+
+		// Creates multiple threads to get the data from collection.
+		for (DataListCollection refDataList : dP.getDataCollection()) {
+			Thread seriesThreads = new Thread(() -> createSeries_Type_3(refDataList));
+			seriesThreads.start();
+			seriesThreads.join();
+		}
+	}
 	public void actionCalibrationPlot_Type1() throws InterruptedException {
 		// Removes any graph on the screen and checks if data exists.
 		removeGraph();
@@ -259,11 +244,15 @@ public class GUIController implements Initializable {
 		chartMainChart.setCreateSymbols(false);
 		charMainxAxis.setAutoRanging(true);
 		charMainyAxis.setForceZeroInRange(false);
+		charMainxAxis.setLabel("Voltage (mV)");
+		charMainyAxis.setLabel("Current (nA)");
 
 		// Creates multiple threads to get the data from collection.
-		for (DataListCollection refDataList : dP.getDataCollection()) {
-			Thread seriesThreads = new Thread(() -> createSeries_Type_1_Calibration(refDataList));
-			seriesThreads.start();
+		if (dP.getType1Voltage() != null) {
+			for (DataListCollection refDataList : dP.getDataCollection()) {
+				Thread seriesThreads = new Thread(() -> createSeries_Type_1_Calibration(refDataList));
+				seriesThreads.start();
+			}
 		}
 	}
 
@@ -285,28 +274,15 @@ public class GUIController implements Initializable {
 		progressCounter = 0.0;
 		// Initializes some default value for the graph.
 		chartMainChart.setCreateSymbols(true);
-		/* AutoRanging will handle this.
-		Double totalGap = 0.0, avarageGap = 0.0, max = Double.MIN_VALUE, min = Double.MAX_VALUE;
-		for (int i = 1; i < dP.getDataCollection().size(); i++) {
-			// Gets the good range for the graph.
-			Double temp = dP.getDataCollection().get(i).getConcentration();
-			max = temp > max ? temp : max;
-			min = temp < min ? temp : min;
-			Double step = Math.abs(temp - dP.getDataCollection().get(i - 1).getConcentration());
-			totalGap += step;
-		}
-		avarageGap = totalGap / dP.getDataCollection().size();
-		charMainxAxis.setLowerBound(min - avarageGap / 2);
-		charMainxAxis.setUpperBound(max + avarageGap / 2);
-		 */
 		charMainxAxis.setAutoRanging(true);
 		charMainyAxis.setForceZeroInRange(false);
+		charMainxAxis.setLabel("Concentration");
+		charMainyAxis.setLabel("Average Voltage (nA)");
 
 		// Creates multiple threads to get the data from collection.
 		for (DataListCollection refDataList : dP.getDataCollection()) {
 			Thread seriesThreads = new Thread(() -> createSeries_Type_2(refDataList));
 			seriesThreads.start();
-			seriesThreads.join();
 		}
 
 	}
@@ -332,6 +308,8 @@ public class GUIController implements Initializable {
 		charMainxAxis.setAutoRanging(false);
 		charMainxAxis.setLowerBound(-1.25);
 		charMainxAxis.setUpperBound(1.25);
+		charMainxAxis.setLabel("Voltage (mV)");
+		charMainyAxis.setLabel("Current (nA)");
 
 		// Creates multiple threads to get the data from collection.
 		for (DataListCollection refDataList : dP.getDataCollection()) {
@@ -363,7 +341,7 @@ public class GUIController implements Initializable {
 		FileChooser chooser = new FileChooser();
 		chooser.setTitle(msg.getString("<GUITEXT>TitleOpenFile"));
 		List<File> fileList = chooser.showOpenMultipleDialog(refStage);
-		disPlayingLinearRegression = false;
+		disableFunctionButtons();
 
 		// Execute the state machine when the program receives files
 		if (fileList != null) {
@@ -373,22 +351,12 @@ public class GUIController implements Initializable {
 			dP.setWorkingFiles(fileList);
 			sM.isDataInputted = true;
 			sM.currentState = States.CALIBRATING;
-			main.executeStateMachine();
+			executeStateMachine();
 		}
 
 		if (dP.getDataCollection() != null) {
 			// Enable the buttons if read the corresponding files
-			for (DataListCollection refDataList : dP.getDataCollection()) {
-				if (refDataList.getListType_1() != null) {
-					btnComparisonPlot.setDisable(false);
-				}
-				if (refDataList.getListType_2() != null) {
-					btnCalibrationType2.setDisable(false);
-				}
-				if (refDataList.getListType_3() != null) {
-					btnPeakCurrentPlot.setDisable(false);
-				}
-			}
+			enableFunctionButtons();
 		}
 
 		// Print report on the screen
@@ -412,16 +380,8 @@ public class GUIController implements Initializable {
 			this.removeGraph();
 			pbMainProgressBar.setProgress(0);
 			txfCInputCharge.setText("");
-			labEstimateConcentration.setText("");
-
-			btnPeakCurrentPlot.setDisable(true);
-			btnEstimateConcentration.setDisable(true);
-			btnCalibrationType2.setDisable(true);
-			btnComparisonPlot.setDisable(true);
-			btnClearData.setDisable(true);
-			btnEdit.setDisable(true);
-			disPlayingLinearRegression = false;
-			main.executeStateMachine();
+			disableFunctionButtons();
+			executeStateMachine();
 			printReport();
 		}
 	}
@@ -511,7 +471,7 @@ public class GUIController implements Initializable {
 		Boolean[] agreement = new Boolean[1];
 		agreement[0] = false;
 		NumberTextField concentrationInputField = new NumberTextField();
-		concentrationInputField.setPromptText("Voltage");
+		concentrationInputField.setPromptText("-1< voltage < 1");
 
 		// Sets the custom button types and adds to the dialog.
 		ButtonType assignType = new ButtonType("Assign", ButtonData.OK_DONE);
@@ -732,27 +692,37 @@ public class GUIController implements Initializable {
 
 	private void changeLangauge(Locale l) {
 		msg = ResourceBundle.getBundle("edu.pourmand.soe.ucsc.BioGrapher/StringBundles/SBundle", l);
-		// Loads all GUI texts into the GUI elements.
-		btnCalibrationType2.setText(msg.getString("<GUITEXT>ButtonCalibration"));
-		btnComparisonPlot.setText(msg.getString("<GUITEXT>ButtonComparision"));
-		btnClearData.setText(msg.getString("<GUITEXT>ButtonClearData"));
+		// Upper 5 buttons
 		btnBrowse.setText(msg.getString("<GUITEXT>ButtonBrowse"));
-		btnEdit.setText(msg.getString("<GUITEXT>ButtonEdit"));
+		btnComparisonPlot.setText(msg.getString("<GUITEXT>ButtonComparision"));
+		btnCalibrationType1.setText(msg.getString("<GUITEXT>ButtonCalibration_Type1"));
+		btnCalibrationType2.setText(msg.getString("<GUITEXT>ButtonCalibration_Type2"));
 		btnPeakCurrentPlot.setText(msg.getString("<GUITEXT>ButtonPeakCurrentPlot"));
+
+		// Lower 4 buttons
 		btnEstimateConcentration.setText(msg.getString("<GUITEXT>ButtonEstimateConcentration"));
 		btnReloadStatus.setText(msg.getString("<GUITEXT>ButtonReload"));
+		btnEdit.setText(msg.getString("<GUITEXT>ButtonEdit"));
+		btnClearData.setText(msg.getString("<GUITEXT>ButtonClearData"));
+
+		// Menu bar
 		menFile.setText(msg.getString("<GUITEXT>MenuFile"));
 		menEdit.setText(msg.getString("<GUITEXT>MenuEdit"));
 		menHelp.setText(msg.getString("<GUITEXT>MenuHelp"));
 		menLanguage.setText(msg.getString("<GUITEXT>MenuLanguage"));
+
+		// Menu items
 		meitBrowse.setText(btnBrowse.getText());
 		meitClearData.setText(btnClearData.getText());
 		meitExportData.setText(msg.getString("<GUITEXT>MenuItemExportData"));
-		meitComparsionPlot.setText(btnComparisonPlot.getText());
-		meitCalibrationPlot.setText(btnCalibrationType2.getText());
-		meitPeakCurrentPlot.setText(btnPeakCurrentPlot.getText());
-		meitEditConcentration.setText(btnEdit.getText());
+		meitPlot1.setText(btnComparisonPlot.getText());
+		meitPlot2.setText(btnCalibrationType1.getText());
+		meitPlot3.setText(btnCalibrationType2.getText());
+		meitPlot4.setText(btnPeakCurrentPlot.getText());
+		meitEdit.setText(btnEdit.getText());
 		meitAbout.setText(msg.getString("<GUITEXT>MenuItemAbout"));
+
+		// Other
 		labEstimateConcentration.setText(msg.getString("<GUITEXT>LabelEstimateConcentration"));
 		labInputCharge.setText(msg.getString("<GUITEXT>LabelInputCharge"));
 		tipaConcentration.setText(msg.getString("<GUITEXT>TitledPaneConcentration"));
@@ -923,7 +893,6 @@ public class GUIController implements Initializable {
 				}
 				average = nu / de;
 				myData = new XYChart.Data<Number, Number>(xEP, average);
-				// Creates the label on the plots
 				String value = "(" + xEP + " : ";
 				value += new DecimalFormat("##.##").format(average) + ")";
 				Text text = new Text(value);
@@ -931,8 +900,6 @@ public class GUIController implements Initializable {
 				text.setTranslateX(45);
 				myData.setNode(text);
 				series.getData().add(myData);
-				// System.out.println("T: " + refType_3.getTime() + " xEP:" +
-				// xEP + "\tC: " + omnCurrent);
 				de = 0.0;
 			}
 
@@ -968,6 +935,41 @@ public class GUIController implements Initializable {
 			return false;
 		}
 		return true;
+	}
+
+	private void enableFunctionButtons() {
+		if (dP.getDataCollection() != null) {
+			pbMainProgressBar.setProgress(progressCounter = 0.0);
+			btnClearData.setDisable(false);
+			btnEdit.setDisable(false);
+			for (DataListCollection refDataCollection : dP.getDataCollection()) {
+				// Collection has type1, then enables the Comparison button
+				if (btnComparisonPlot.isDisable() && refDataCollection.getListType_1() != null) {
+					btnComparisonPlot.setDisable(false);
+					btnCalibrationType1.setDisable(false);
+				}
+				// Collection has type2, then enables the Calibration button
+				if (btnCalibrationType2.isDisable() && refDataCollection.getListType_2() != null) {
+					btnCalibrationType2.setDisable(false);
+				}
+				// Collection has type3, then enables the Peak Current button
+				if (btnPeakCurrentPlot.isDisabled() && refDataCollection.getListType_3() != null) {
+					btnPeakCurrentPlot.setDisable(false);
+				}
+			}
+
+		}
+	}
+
+	private void disableFunctionButtons() {
+		removeGraph();
+		btnEstimateConcentration.setDisable(true);
+		btnCalibrationType1.setDisable(true);
+		btnCalibrationType2.setDisable(true);
+		btnComparisonPlot.setDisable(true);
+		btnPeakCurrentPlot.setDisable(true);
+		btnClearData.setDisable(true);
+		btnEdit.setDisable(true);
 	}
 
 	/**
@@ -1053,6 +1055,188 @@ public class GUIController implements Initializable {
 		return (yValue - dP.getYIntersect()) / dP.getSlope();
 	}
 
+	public static void executeStateMachine() {
+
+		// State Machine not running.
+		if (!sM.running) {
+			GUIController.showAlertError(//
+					msg.getString("<GUITEXT>TitleError"), //
+					msg.getString("<GUITEXT>HeaderError"), //
+					msg.getString("<GUITEXT>ContentError"), //
+					globalException);
+			return;
+		}
+		try {
+
+			switch (sM.currentState) {
+			case BEGINNING:
+			/*
+			 * If user selects to load path file, 
+			 * state machine starts to calibrate BioTemp.bgt, 
+			 * otherwise redirect to main screen state.
+			 */
+			{
+				out.print("\n---Beginning---\n");
+				if (sM.isAlertLoadPathConfirmed) {
+					myFile = fM.getFilePath();
+					out.print("<Notice>Load successed");
+					sM.currentState = States.CALIBRATING;
+				} else {
+					fM.deletePathFile();
+					dP.resetProviderAndKeepData(false);
+					sM.currentState = States.DISPLAYING;
+				}
+				executeStateMachine();
+				break;
+			}
+
+			case CALIBRATING:
+			/*
+			 * CALIBRATING
+			 * A five-stage process.
+			 * Refer to each stage in the code.
+			 */
+			{
+				/*
+				 * Stage 1:
+				 * Check the existence of the inputting file.
+				 * If it exists, process CalibatingSignature.
+				 */
+				out.print("\n---InputtingFile---\n");
+				if (sM.isDataInputted) {
+					myFile = dP.getNextWorkingFile();
+					if (myFile != null) {
+						out.print("<Notice>Load successed: ");
+						out.println(myFile.getPath());
+					} else {
+						out.println("<Notice>Loading failed or reach the end of file queue.");
+						sM.isDataInputted = false;
+						sM.currentState = States.SAVING;
+						dP.resetProviderAndKeepData(true);
+						executeStateMachine();
+						break;
+					}
+				}
+				/*
+				 * Stage 2:
+				 * Check the signature of the inputting file.
+				 * If it exists, process CalibatingVariable.
+				 */
+				out.print("\n---CalibatingSignature---\n");
+				dP.setCurrentType(myFile);
+				if (dP.isValidType()) {
+					// Good signature.
+					out.print("<Notice>Data type calibration successed.");
+					out.println("(" + dP.getCurrentType() + ")");
+				} else {
+					// Bad signature.
+					out.println("<Error>Data does not contain a correct signature.");
+					executeStateMachine();
+					break;
+				}
+				/*
+				 * Stage 3:
+				 * Check the variable of the inputting file.
+				 * If it all data are valid, process CalibatingRemaining.
+				 */
+				out.print("\n---CalibatingVariable---\n");
+				dP.extractVariable(myFile);
+				if (dP.isValidVariable()) {
+					// Good signature, good data.
+					out.print("<Notice>Extracted Variable type: ");
+					out.print("(" + dP.getCurrentType() + ")\t\t");
+					out.print("Reamining files:");
+					out.println(dP.getRemainingFileSize());
+				} else {
+					// Good signature, bad data.
+					out.println("<Error>Data is damaged");
+					executeStateMachine();
+					break;
+				}
+
+				/*
+				 * Stage 4:
+				 * Check the remaining files.
+				 * If remaining >0, process InputtingFile again.
+				 */
+				out.print("\n---CalibatingRemaining---\n");
+				out.println("Remaining:" + dP.getRemainingFileSize());
+				if (dP.getRemainingFileSize() > 0) {
+					sM.currentState = States.CALIBRATING;
+					sM.isDataInputted = true;
+					executeStateMachine();
+					break;
+				} else {
+					sM.currentState = States.SAVING;
+					sM.isDataInputted = false;
+					executeStateMachine();
+					break;
+				}
+			}
+
+			case SAVING:
+				/*
+				 * Stage 5:
+				 * All files are loaded. Prompt the user to enter concentration for each file.
+				 * If we load from previous stage, 
+				 * we will graph them automatically.
+				 * Goto DISPLAYING state.
+				 */
+
+				GUIController.showAlertConcentration(//
+						msg.getString("<GUITEXT>TitleConcentration"), //
+						msg.getString("<GUITEXT>HeaderConcentration"), //
+						msg.getString("<GUITEXT>ContentConcentration"));
+				if (sM.isAlertLoadPathConfirmed) {
+					sM.isAlertClearDataComirmed = false;
+				}
+				fM.savePath(dP);
+				sM.currentState = States.DISPLAYING;
+				dP.resetProviderAndKeepData(true);
+				executeStateMachine();
+				break;
+
+			case DISPLAYING:
+			/*
+			* MainScreen 
+			* 1. Activate buttons 
+			* 2. Calculate expected concentration 
+			* 3. Display graph Goto clear layout when graph button is clicked
+			*/
+			{
+				out.print("\n---MainScreen---\n");
+				out.println(dP.getReport());
+				/*List<String> someString = new ArrayList<>();
+				for (Integer i = 0; i < 5; i++) {
+					someString.add(i.toString());
+				}**/
+				if (sM.isAlertClearDataComirmed) {
+					dP.resetProviderAndKeepData(false);
+					fM.deletePathFile();
+					sM.isAlertClearDataComirmed = false;
+					executeStateMachine();
+				}
+
+				break;
+			}
+
+			default:
+				out.println("Something Wrong");
+				break;
+
+			} // switch
+
+		} catch (Exception e) {
+			globalException = e;
+			e.printStackTrace();
+			GUIController.showAlertError(//
+					msg.getString("<GUITEXT>TitleError"), //
+					msg.getString("<GUITEXT>HeaderError"), //
+					msg.getString("<GUITEXT>ContentError"), //
+					globalException);
+		}
+	}
+
 }
 
 class NumberTextField extends TextField {
@@ -1074,6 +1258,9 @@ class NumberTextField extends TextField {
 
 	private boolean validate(String text) {
 		// Modify by Tz-Shiuan Lin
+		if (text.equals("-")) {
+			return this.getText().length() > 0 ? false : true;
+		}
 		if (text.equals(".")) {
 			int counter = 0;
 			for (int i = 0; i < this.getText().length(); i++) {
