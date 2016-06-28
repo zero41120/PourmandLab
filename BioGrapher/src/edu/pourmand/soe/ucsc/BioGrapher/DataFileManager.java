@@ -8,7 +8,6 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.msg;
 
 public class DataFileManager {
 
@@ -41,7 +40,7 @@ public class DataFileManager {
 		}
 		*/
 
-		out.println(msg.getString("<Notice>OldPathFind"));
+		out.println("<Notice>BioTemp.bgt found");
 		File oldPath = new File("./BioTemp.bgt");
 		boolean flag = oldPath.getAbsoluteFile().exists();
 		return flag;
@@ -54,7 +53,7 @@ public class DataFileManager {
 	protected void deletePathFile() throws Exception {
 		Path p = Paths.get("./BioTemp.bgt");
 		if (Files.deleteIfExists(p)) {
-			System.out.println(msg.getString("<Notice>OldPathDelete"));
+			System.out.println("<Notice>BioTemp is deleted");
 		}
 	}
 
@@ -68,7 +67,7 @@ public class DataFileManager {
 		PrintWriter writerPrint = new PrintWriter(writeFile);
 		writerPrint.println("-BGSignature-");
 		writerPrint.flush();
-		System.out.println(msg.getString("<Notice>OldPathCreate"));
+		System.out.println("<Notice>BioTemp.bgt is created");
 		writerPrint.close();
 
 	}
@@ -89,17 +88,14 @@ public class DataFileManager {
 		}
 		FileWriter writeFile = new FileWriter("./BioTemp.bgt", true);
 		PrintWriter writerPrint = new PrintWriter(writeFile);
-		System.out.print(msg.getString("<Notice>OldPathSave"));
+		System.out.print("<Notice>Saving files into BioTemp.bgt");
 		for (DataListCollection dC : tP.getDataCollection()) {
 			writerPrint.println(dC.getFilePath() +":"+ dC.getConcentration());
 			System.out.println(dC.getFilePath() +":"+ dC.getConcentration());
 
 		}
 		writerPrint.flush();
-		/*if (refPath.getPath() == "./BioTemp.bgt") {
-			deletePathFile();
-			System.out.println("Delete duplicate");
-		}*/
+	
 		writerPrint.close();
 	}
 

@@ -14,7 +14,26 @@ class DataProvider {
 	private String currentType = null;
 	private Integer pathCounter = 0;
 	private boolean isVariableValid = false;
-	
+	private Double yIntersect;
+	private Double slope;
+	private Double type1Voltage = null;
+
+	public Double getFileSizeType1() {
+		Double counterT1 = 0.0;
+		try {
+			if (getDataCollection() != null) {
+				for (DataListCollection dataList : mainList) {
+					if (dataList.getListType_2() != null) {
+						counterT1 += dataList.getListType_1().size();
+					}
+				}
+			}
+		} catch (Exception e) {
+			counterT1 = 1.0;
+		}
+		return counterT1;
+	}
+
 	public Double getFileSizeType2() {
 		Double counterT2 = 0.0;
 		if (getDataCollection() != null) {
@@ -25,6 +44,18 @@ class DataProvider {
 			}
 		}
 		return counterT2;
+	}
+	
+	public Double getFileSizeType3() {
+		Double counterT3 = 0.0;
+		if (getDataCollection() != null) {
+			for (DataListCollection dataList : mainList) {
+				if (dataList.getListType_3() != null) {
+					counterT3 += dataList.getListType_3().size();
+				}
+			}
+		}
+		return counterT3;
 	}
 
 	/**
@@ -104,21 +135,11 @@ class DataProvider {
 					dP.getDataCollection().addAll(tP.getDataCollection());
 				}
 			}
-			
+
 			if (tP.getWorkingConcentration() != null) {
-					dP.setWorkingConcentration(tP.getWorkingConcentration());
+				dP.setWorkingConcentration(tP.getWorkingConcentration());
 			}
 
-			/* 
-			// Append type 2 data from tP to dP.
-			if (tP.getType_2() != null) {
-				if (dP.getType_2() == null) {
-					dP.setType_2(tP.getType_2());
-				} else {
-					dP.getType_2().addAll(tP.getType_2());
-				}
-			}
-			*/
 			if (tP.workingFiles != null) {
 				dP.workingFiles = tP.workingFiles;
 			}
@@ -131,26 +152,21 @@ class DataProvider {
 	 * @return String of the report.
 	 */
 	public String getReport() {
-		StringBuffer reportMessage = new StringBuffer("DataProvider report:\n");
-		String message = this.getDataCollection() == null ? "N/A\n" : "Provider- Size:" + getDataCollection().size();
+		String message = "DataProvider report:\t";
+		message += this.getDataCollection() == null ? "N/A\n" : "Loaded files:" + getDataCollection().size();
 		if (getDataCollection() != null) {
-			int counterT1 = 0;
-			int counterT2 = 0;
+			message += "(Concentration : File Title)\n";
+			int counter = 1;
 			for (DataListCollection dataList : mainList) {
-				if (dataList.getListType_1() != null) {
-					counterT1 += dataList.getListType_1().size();
-				}
-				if (dataList.getListType_2() != null) {
-					counterT2 += dataList.getListType_2().size();
-				}
+				message += dataList.getConcentration() + " : " + dataList.getFileTitle();
+				message += counter++ % 5 == 0? "\n": " | ";
 			}
-			message += counterT1 > 0? "\nType 1- Size:" + counterT1: "\nType 1- N/A";
-			message += counterT2 > 0? "\nType 2- Size:" + counterT2: "\nType 2- N/A";
 
 		}
-		reportMessage.append(message);
-		return reportMessage.toString();
+		
+		return message;
 	}
+	
 
 	/*
 	 * Methods below are getters and setters.
@@ -176,23 +192,6 @@ class DataProvider {
 		this.pathCounter++;
 	}
 
-	/*
-		protected List<DataType_1> getType_1() {
-			return type_1;
-		}
-	
-		protected void setType_1(List<DataType_1> type_1) {
-			this.type_1 = type_1;
-		}
-	
-		protected List<DataType_2> getType_2() {
-			return type_2;
-		}
-	
-		protected void setType_2(List<DataType_2> type_2) {
-			this.type_2 = type_2;
-		}
-	*/
 	protected String getCurrentType() {
 		return currentType;
 	}
@@ -235,6 +234,30 @@ class DataProvider {
 
 	public void setWorkingConcentration(List<Double> workingConcentration) {
 		this.workingConcentration = workingConcentration;
+	}
+	
+	public Double getYIntersect() {
+		return yIntersect;
+	}
+	
+	public void setYIntersect(Double yIntersect) {
+		this.yIntersect = yIntersect;
+	}
+	
+	public Double getSlope() {
+		return slope;
+	}
+	
+	public void setSlope(Double slope) {
+		this.slope = slope;
+	}
+
+	public Double getType1Voltage() {
+		return type1Voltage;
+	}
+
+	public void setType1Concetration(Double type1Concetration) {
+		this.type1Voltage = type1Concetration;
 	}
 
 }

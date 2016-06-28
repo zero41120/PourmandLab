@@ -9,102 +9,139 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<VBox prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="edu.pourmand.soe.ucsc.BioGrapher.GUIController">
+<VBox maxHeight="1080.0" maxWidth="1920.0" minHeight="600.0"
+	minWidth="800.0" prefHeight="768.0" prefWidth="1024.0"
+	xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="edu.pourmand.soe.ucsc.BioGrapher.GUIController">
 	<children>
 		<MenuBar>
 			<menus>
-				<Menu mnemonicParsing="false" text="File">
+				<Menu fx:id="menFile" mnemonicParsing="false" text="File">
 					<items>
-						<MenuItem mnemonicParsing="false" text="Close" />
+						<MenuItem fx:id="meitBrowse" mnemonicParsing="false"
+							onAction="#actionBrowse" text="Browse" />
+						<MenuItem fx:id="meitClearData" mnemonicParsing="false"
+							onAction="#actionClearData" text="Clear Data" />
+						<MenuItem fx:id="meitExportData" mnemonicParsing="false"
+							onAction="#actionExportCalibration" text="Export Data" />
 					</items>
 				</Menu>
-				<Menu mnemonicParsing="false" text="Edit">
+				<Menu fx:id="menEdit" mnemonicParsing="false" text="Edit">
 					<items>
-						<MenuItem mnemonicParsing="false" text="Delete" />
+						<MenuItem fx:id="meitPlot1" mnemonicParsing="false"
+							onAction="#actionComparisonPlot" text="Comparsion Plot" />
+						<MenuItem fx:id="meitPlot2" mnemonicParsing="false"
+							onAction="#actionCalibrationPlot_Type1" text="Comparsion Plot" />
+						<MenuItem fx:id="meitPlot3" mnemonicParsing="false"
+							onAction="#actionCalibrationPlot_Type2" text="Calibration Plot" />
+						<MenuItem fx:id="meitPlot4" mnemonicParsing="false"
+							onAction="#actionPeakCurrentPlot" text="Peak Current Plot" />
+						<MenuItem fx:id="meitEdit" mnemonicParsing="false"
+							onAction="#actionEdit" text="Edit Concentration" />
 					</items>
 				</Menu>
-				<Menu mnemonicParsing="false" text="Help">
+				<Menu fx:id="menHelp" mnemonicParsing="false" text="Help">
 					<items>
-						<MenuItem mnemonicParsing="false" text="About" />
+						<MenuItem fx:id="meitAbout" mnemonicParsing="false" text="About" />
+					</items>
+				</Menu>
+				<Menu fx:id="menLanguage" mnemonicParsing="false" text="Langauge">
+					<items>
+						<MenuItem mnemonicParsing="false" onAction="#actionLanguage"
+							text="Arabic" />
+						<MenuItem mnemonicParsing="false" onAction="#actionLanguage"
+							text="English" />
+						<MenuItem mnemonicParsing="false" onAction="#actionLanguage"
+							text="Hindi" />
+						<MenuItem mnemonicParsing="false" onAction="#actionLanguage"
+							text="Russian" />
+						<MenuItem mnemonicParsing="false" onAction="#actionLanguage"
+							text="Spanish" />
+						<MenuItem mnemonicParsing="false" onAction="#actionLanguage"
+							text="Traditional Chinese" />
+						<MenuItem mnemonicParsing="false" onAction="#actionLanguage"
+							text="Turkish" />
 					</items>
 				</Menu>
 			</menus>
 		</MenuBar>
-      <ToolBar prefHeight="40.0" prefWidth="200.0">
-         <items>
-												<Button fx:id="btnBrowse" mnemonicParsing="false" onAction="#actionBrowse" prefHeight="20.0" prefWidth="100.0" text="Browse" />
-            <Button fx:id="btnEdit" mnemonicParsing="false" onAction="#actionEdit" prefHeight="20.0" prefWidth="100.0" text="Edit" />
-												<Button fx:id="btnClearData" mnemonicParsing="false" onAction="#actionClearData" prefHeight="20.0" prefWidth="100.0" text="Clear Data" />
-            <Button fx:id="btnCalibrationPlot" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#actionCalibrationPlot" text="Calibration Plot" />
-            <Button fx:id="btnComparisonPlot" layoutX="378.0" layoutY="10.0" mnemonicParsing="false" onAction="#actionComparisonPlot" text="Comparison Plot" />
-            <AnchorPane prefHeight="27.0" prefWidth="226.0">
-               <children>
-                  <ProgressBar fx:id="pbMainProgressBar" layoutX="57.0" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-               </children></AnchorPane>
-         </items>
-      </ToolBar>
-      <Pane fx:id="paneLineChartPane" prefHeight="400.0">
-         <children>
-            <LineChart fx:id="chartMainChart" animated="false" maxHeight="350.0" prefHeight="300.0" prefWidth="800.0">
-              <xAxis>
-                <NumberAxis fx:id="charMainxAxis" side="BOTTOM" />
-              </xAxis>
-              <yAxis>
-                <NumberAxis fx:id="charMainyAxis" side="LEFT" />
-              </yAxis>
-            </LineChart>
-         </children>
-      </Pane>
-      <HBox>
-         <children>
-            <TitledPane animated="false" text="Concetration">
-               <content>
-              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                     <children>
-      										<Button fx:id="btnCalculateConcentration" alignment="CENTER" contentDisplay="TOP" layoutX="2.0" layoutY="62.0" mnemonicParsing="false" onAction="#actionCalculateConcentration" text="Calculate Concentration" AnchorPane.leftAnchor="5.0" />
-      												<Label layoutX="2.0" layoutY="6.0" text="Input Charge (nA):" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
-      												<TextField fx:id="txfCInputCharge" layoutX="2.0" layoutY="29.0" AnchorPane.leftAnchor="5.0" />
-                     </children>
-                  </AnchorPane>
-               </content>
-            </TitledPane>
-      				<TabPane prefHeight="170.0" prefWidth="294.0" tabClosingPolicy="UNAVAILABLE" HBox.hgrow="ALWAYS">
-      					<tabs>
-      						<Tab text="Current-Voltage">
-                     <content>
-                        <AnchorPane>
-                           <children>
-                              <Label text="Voltage Used:" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="15.0" />
-                              <TextField fx:id="txfCVVoltageUsed" layoutX="98.0" layoutY="10.0" AnchorPane.leftAnchor="105.0" AnchorPane.topAnchor="10.0" />
-                           </children>
-                        </AnchorPane>
-                     </content>
-      						</Tab>
-      						<Tab text="Time-Current-Voltage">
-                     <content>
-                        <AnchorPane>
-                           <children>
-												<Label layoutY="14.0" text="Voltage Used:" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="15.0" />
-												<TextField fx:id="txfTCVConcentration" layoutX="105.0" layoutY="41.0" />
-												<Label layoutX="5.0" layoutY="46.0" text="Concentration:" AnchorPane.leftAnchor="5.0" />
-												<TextField fx:id="txfTCVVoltageUsed" layoutX="105.0" layoutY="9.0" AnchorPane.leftAnchor="105.0" AnchorPane.topAnchor="10.0" />
-                           </children>
-                        </AnchorPane>
-                     </content>
-      						</Tab>
-      					</tabs>
-      				</TabPane>
-            <TitledPane animated="false" prefHeight="170.0" prefWidth="324.0" text="Data Provider Status">
-              <content>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                     <children>
-                        <TextFlow fx:id="txfwReport" focusTraversable="true" layoutX="21.4" layoutY="20.4" pickOnBounds="false" prefHeight="94.0" prefWidth="291.0" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                        <Button fx:id="btnReloadStatus" layoutX="104.0" layoutY="107.0" mnemonicParsing="false" onAction="#actionReloadStatus" text="Reload Status" AnchorPane.bottomAnchor="5.0" />
-                     </children>
-                  </AnchorPane>
-              </content>
-            </TitledPane>
-         </children>
-      </HBox>
+		<ToolBar prefHeight="40.0" prefWidth="200.0">
+			<items>
+				<Button fx:id="btnBrowse" mnemonicParsing="false" onAction="#actionBrowse"
+					prefHeight="20.0" prefWidth="100.0" text="Browse" />
+				<Button fx:id="btnComparisonPlot" layoutX="378.0" layoutY="10.0"
+					mnemonicParsing="false" onAction="#actionComparisonPlot" text="CHI1030C Comparison" />
+				<Button fx:id="btnCalibrationType1" layoutX="230.0" layoutY="10.0"
+					mnemonicParsing="false" onAction="#actionCalibrationPlot_Type1"
+					text="CHI1030C Calibration" />
+				<Button fx:id="btnCalibrationType2" layoutX="10.0" layoutY="10.0"
+					mnemonicParsing="false" onAction="#actionCalibrationPlot_Type2"
+					text="GFP Calibration" />
+				<Button fx:id="btnPeakCurrentPlot" mnemonicParsing="false"
+					onAction="#actionPeakCurrentPlot" text="GFP Peak Current" />
+			</items>
+		</ToolBar>
+		<LineChart fx:id="chartMainChart" legendSide="RIGHT"
+			maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
+			minHeight="40.0" minWidth="80.0" prefHeight="650.0">
+			<xAxis>
+				<NumberAxis fx:id="charMainxAxis" label="X value" side="BOTTOM" />
+			</xAxis>
+			<yAxis>
+				<NumberAxis fx:id="charMainyAxis" label="Y Value" side="LEFT" />
+			</yAxis>
+		</LineChart>
+		<HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
+			prefHeight="299.0" prefWidth="1024.0">
+			<children>
+				<TitledPane fx:id="tipaConcentration" animated="false"
+					text="Concetration">
+					<content>
+						<AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="161.0"
+							prefWidth="200.0">
+							<children>
+								<Button fx:id="btnEstimateConcentration" alignment="CENTER"
+									contentDisplay="TOP" layoutX="17.0" layoutY="76.0"
+									mnemonicParsing="false" onAction="#actionEstimateConcentration"
+									text="Estimate Concentration" AnchorPane.leftAnchor="0.0" />
+								<Label fx:id="labInputCharge" layoutX="2.0" layoutY="6.0"
+									text="Input Charge (nA):" AnchorPane.leftAnchor="5.0"
+									AnchorPane.topAnchor="5.0" />
+								<TextField fx:id="txfCInputCharge" layoutX="16.0"
+									layoutY="40.0" AnchorPane.leftAnchor="0.0" />
+								<Label fx:id="labEstimateConcentration" layoutX="26.0"
+									layoutY="112.0" prefHeight="27.0" prefWidth="167.0" text=""
+									AnchorPane.leftAnchor="0.0" />
+							</children>
+						</AnchorPane>
+					</content>
+				</TitledPane>
+				<TitledPane fx:id="tipaDataProviderStatus" animated="false"
+					prefHeight="175.0" prefWidth="821.0" text="Data Provider Status">
+					<content>
+						<AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="162.0"
+							prefWidth="600.0">
+							<children>
+								<TextFlow fx:id="txfwReport" focusTraversable="true"
+									layoutX="21.4" layoutY="20.4" pickOnBounds="false"
+									AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+									AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+								<Button fx:id="btnReloadStatus" layoutX="100.0" layoutY="115.0"
+									mnemonicParsing="false" onAction="#actionReloadStatus" text="Reload Status"
+									AnchorPane.bottomAnchor="0.0" />
+								<Button fx:id="btnEdit" layoutX="250.0" layoutY="105.0"
+									mnemonicParsing="false" onAction="#actionEdit" prefHeight="20.0"
+									prefWidth="100.0" text="Edit" AnchorPane.bottomAnchor="0.0" />
+								<Button fx:id="btnClearData" layoutX="403.0" layoutY="105.0"
+									mnemonicParsing="false" onAction="#actionClearData" prefHeight="20.0"
+									prefWidth="100.0" text="Clear Data" AnchorPane.bottomAnchor="0.0" />
+								<ProgressBar fx:id="pbMainProgressBar" progress="0.0"
+									AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+							</children>
+						</AnchorPane>
+					</content>
+				</TitledPane>
+			</children>
+		</HBox>
 	</children>
 </VBox>
