@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GUIController">
+   <children>
+      <MenuBar maxHeight="30.0" minHeight="30.0" prefHeight="30.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+                  <MenuItem mnemonicParsing="false" text="Unspecified Action" />
+                  <MenuItem mnemonicParsing="false" text="Unspecified Action" />
+              <MenuItem mnemonicParsing="false" text="Close" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Edit">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Delete" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <AnchorPane layoutX="132.0" layoutY="110.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="30.0">
+         <children>
+            <AnchorPane prefHeight="400.0" prefWidth="500.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <LineChart fx:id="TNGraph" prefHeight="400.0" prefWidth="500.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <xAxis>
+                      <CategoryAxis side="BOTTOM" />
+                    </xAxis>
+                    <yAxis>
+                      <NumberAxis side="LEFT" />
+                    </yAxis>
+                  </LineChart>
+               </children>
+            </AnchorPane>
+            <SplitPane dividerPositions="0.29797979797979796" layoutX="14.0" layoutY="400.0" prefHeight="160.0" prefWidth="689.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+              <items>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                     <children>
+                        <TextArea prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                     <children>
+                        <TextArea layoutX="36.0" layoutY="-9.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="0.0" />
+                        <ScrollBar layoutX="534.0" layoutY="16.0" orientation="VERTICAL" prefWidth="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                     </children>
+                  </AnchorPane>
+              </items>
+            </SplitPane>
+            <Button fx:id="TNButtonLoadText" layoutX="534.0" layoutY="349.0" mnemonicParsing="false" onAction="#TNActionClickLoadText" prefHeight="27.0" prefWidth="104.0" text="Load Text" />
+            <ChoiceBox fx:id="TNChoiceBoxPeak" layoutX="578.0" layoutY="53.0" prefHeight="27.0" prefWidth="140.0" />
+            <ProgressBar fx:id="TNProgress" layoutX="578.0" layoutY="15.0" prefHeight="20.0" prefWidth="140.0" progress="0.0" />
+            <Slider fx:id="TNSliderVoltage" layoutX="578.0" layoutY="102.0" prefHeight="16.0" prefWidth="140.0" />
+            <Label layoutX="514.0" layoutY="16.0" text="Progress" />
+            <Label layoutX="524.0" layoutY="58.0" text="Peak" />
+            <Label layoutX="516.0" layoutY="102.0" text="Voltage" />
+            <Button fx:id="TNButtonOutputText" layoutX="648.0" layoutY="349.0" mnemonicParsing="false" onAction="#TNActionOutputText" prefHeight="27.0" prefWidth="97.0" text="Output Text" />
+            <Button fx:id="ButtonOutputExcel" layoutX="648.0" layoutY="313.0" mnemonicParsing="false" onAction="#TNActionOutputFile" text="Output Excel" />
+            <Button fx:id="TNButtonScanMachine" layoutX="534.0" layoutY="313.0" mnemonicParsing="false" onAction="#TNActionClickScanMachine" text="Scan Machine" />
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>
