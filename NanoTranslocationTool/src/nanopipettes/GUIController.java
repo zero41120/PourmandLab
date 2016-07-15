@@ -14,10 +14,17 @@ public class GUIController implements Initializable {
 	// @formatter:on
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		try {
+			System.out.println("start");
+			DataProvider dP = new SQLDatabase();
+			dP.scanData(0.0, 0.0025, "Gold100");
+			System.out.println(dP);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
-	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		// TODO Auto-generated method stub	
 	}

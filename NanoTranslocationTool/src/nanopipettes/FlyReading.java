@@ -1,11 +1,17 @@
 package nanopipettes;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class FlyReading extends DataProvider {
 
 	@Override
-	public void scanData(Double startTime, Double endTime) {
+	public void scanData(Double startTime, Double endTime, String name) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	public void scanData(Double startTime, Double endTime, File inputText) {
 		// TODO Auto-generated method stub
 		
 	}

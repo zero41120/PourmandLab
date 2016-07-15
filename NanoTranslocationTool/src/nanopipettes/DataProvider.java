@@ -1,5 +1,6 @@
 package nanopipettes;
 
+import java.io.File;
 import java.util.ArrayList;
 
 abstract public class DataProvider {
@@ -8,9 +9,28 @@ abstract public class DataProvider {
 	static Double experimentVoltage;
 	
 	/**
-	 * This method scans the data and store the time, current, and the voltage.
+	 * This method scans the data and store the time, current, 
+	 * and the voltage in the field dataSet.
+	 * 
+	 * @param startTime Time start to scan. 
+	 * @param endTime End time, zero for scan to EOF.
+	 * @param existing table name or a file path.
+	 * @throws Exception 
+	 * 			Actual implementation may complain the input name.
 	 */
-	abstract public void scanData(Double startTime, Double endTime);
+	abstract public void scanData(Double startTime, Double endTime, String name) throws Exception;
+	
+	/**
+	 * This method scans the data and store the time, current, 
+	 * and the voltage in the field dataSet.
+	 * 
+	 * @param startTime Time start to scan. 
+	 * @param endTime End time, zero for scan to EOF.
+	 * @param Input text file.
+	 * @throws Exception 
+	 * 			Actual implementation may complain file existence and formatting.
+	 */
+	abstract public void scanData(Double startTime, Double endTime, File inputText) throws Exception;
 	
 	/**
 	 * This method gets the entire data set.

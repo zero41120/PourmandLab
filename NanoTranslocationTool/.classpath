@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry exported="true" kind="lib" path="/Users/SeanLin/Documents/Eclipse/library/sqlite-jdbc-3.8.11.2.jar"/>
-	<classpathentry kind="lib" path="/Users/SeanLin/Documents/Eclipse/library/xmlbeans-2.6.0.jar"/>
-	<classpathentry kind="lib" path="/Users/SeanLin/Documents/Eclipse/library/poi-3.14/poi-3.14-20160307.jar"/>
+	<classpathentry kind="lib" path="src/lib/poi-3.14-20160307.jar"/>
+	<classpathentry kind="lib" path="src/lib/sqlite-jdbc-3.8.11.2.jar"/>
+	<classpathentry kind="lib" path="src/lib/xmlbeans-2.6.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7">
+		<accessrules>
+			<accessrule kind="accessible" pattern="javafx/**"/>
+		</accessrules>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

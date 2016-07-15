@@ -38,4 +38,48 @@ public class TNData {
 	public void setVoltage(double voltage) {
 		this.voltage = voltage;
 	}
+
+	@Override
+	public String toString() {
+		return "Time:" + time + "\tpA:" + current + "\tmV:" + voltage ;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((current == null) ? 0 : current.hashCode());
+		result = prime * result + ((time == null) ? 0 : time.hashCode());
+		result = prime * result + ((voltage == null) ? 0 : voltage.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		TNData other = (TNData) obj;
+		if (current == null) {
+			if (other.current != null)
+				return false;
+		} else if (!current.equals(other.current))
+			return false;
+		if (time == null) {
+			if (other.time != null)
+				return false;
+		} else if (!time.equals(other.time))
+			return false;
+		if (voltage == null) {
+			if (other.voltage != null)
+				return false;
+		} else if (!voltage.equals(other.voltage))
+			return false;
+		return true;
+	}
+	
+	
 }
