@@ -18,6 +18,7 @@ public class Main extends Application{
 		Parent root = FXMLLoader.load(Main.class.getResource("TNGUI.fxml"));
 		primaryStage.setTitle("Nano Translocation Tool " + VERSION);
 		primaryStage.setScene(new Scene(root));
+		nanopipettes.GUIController.refStage = primaryStage;
 		primaryStage.show();
 	}
 }
