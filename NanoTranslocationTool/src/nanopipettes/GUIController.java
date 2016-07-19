@@ -1,5 +1,6 @@
 package nanopipettes;
 
+
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -8,22 +9,12 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 
 public class GUIController implements Initializable {
+	
 	// @formatter:off
 	@FXML Button TNButtonLoadText;
 	// TODO add all fxml element
 	// @formatter:on
 	
-	public static void main(String[] args) {
-		try {
-			System.out.println("start");
-			DataProvider dP = new SQLDatabase();
-			dP.scanData(0.0, 0.0025, "Gold100");
-			System.out.println(dP);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-	}
 	
 	public void initialize(URL location, ResourceBundle resources) {
 		// TODO Auto-generated method stub	
@@ -45,6 +36,13 @@ public class GUIController implements Initializable {
 		
 	}
 
+	public void TNActionOutputText(){
+		
+	}
+
+	public void TNActionOutputFile(){
+		
+	}
 	// TODO add all fxml action
 
 }
