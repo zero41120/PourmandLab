@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -58,10 +59,21 @@ public class GUIController implements Initializable {
 					ignoreFileTitles += myFile.getName() + "\n";
 				}
 			}
-			if (!ignoreFileTitles.isEmpty()) {
+			if (!ignoreFileTitles.equals("\n")) {
 				String alertMessage = "System will ignore the following files:\n";
 				RuntimeException toPrint = new RuntimeException(ignoreFileTitles);
 				showAlertError("Error File", "Unreconized file(s)", alertMessage, toPrint);
+			}
+			for (File myFile : fileList) {
+				try {
+					DataProvider dP = new SQLDatabase();
+					dP.scanData(0.0, 0.0, myFile);
+				} catch (ClassNotFoundException | SQLException e) {
+					showAlertError("Error", "Database fails to operate", "Report this", e);
+				} catch (Exception e) {
+					showAlertError("Error", "Something wrong", "Report this", e);
+				}
+
 			}
 		}
 

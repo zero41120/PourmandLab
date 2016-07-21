@@ -5,7 +5,6 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nanopipettes.GUIController">
    <children>
       <MenuBar maxHeight="30.0" minHeight="30.0" prefHeight="30.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -66,7 +65,7 @@
             <Label layoutX="524.0" layoutY="58.0" text="Peak" />
             <Label layoutX="516.0" layoutY="102.0" text="Voltage" />
             <Button fx:id="TNButtonOutputText" layoutX="648.0" layoutY="349.0" mnemonicParsing="false" onAction="#TNActionOutputText" prefHeight="27.0" prefWidth="97.0" text="Output Text" />
-            <Button fx:id="ButtonOutputExcel" layoutX="648.0" layoutY="313.0" mnemonicParsing="false" onAction="#TNActionOutputFile" text="Output Excel" />
+            <Button fx:id="TNButtonOutputExcel" layoutX="648.0" layoutY="313.0" mnemonicParsing="false" onAction="#TNActionOutputFile" text="Output Excel" />
             <Button fx:id="TNButtonScanMachine" layoutX="534.0" layoutY="313.0" mnemonicParsing="false" onAction="#TNActionClickScanMachine" text="Scan Machine" />
          </children>
       </AnchorPane>

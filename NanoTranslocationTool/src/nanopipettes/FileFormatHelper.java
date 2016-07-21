@@ -2,6 +2,9 @@ package nanopipettes;
 
 import java.lang.invoke.ConstantCallSite;
 import java.util.ArrayList;
+import java.util.StringTokenizer;
+
+import javax.naming.spi.DirStateFactory.Result;
 
 /**
  * This class is a string format checker. For the NanoTranslocationTool program,
@@ -18,7 +21,9 @@ public class FileFormatHelper {
 	static final String[] HEADERPATTERNS = { "^\".*[^\"]\"$", "^[0-9- \\t]+$",
 			"^ATF[ \\t]+[0-9]*[\\.][0-9]*$", "^\"Signals=\".*$" };
 	static final String DECLRATIONPATTERN = "^\"Time \\(s\\)\"[ \t](\"Trace #[0-9] \\([pAmV]*\\)\"[ \t])+\"Trace #[0-9] \\([mVpA]*\\)\"$";
+	static final String DATAPATTERN = "^[1-9]?[.e\\d]*([ \\t][-.\\d]+){2}(([ \\t]{1}[-.\\d]+){2})*$";
 	static String declrationString = "";
+	static Integer traceCount = 0;
 	//@formatter:off
 	/*
 	 * --The following is an example header--
@@ -52,6 +57,8 @@ public class FileFormatHelper {
 	static public Boolean isDeclartion(String toCheck) throws RuntimeException {
 
 		if (toCheck.matches(DECLRATIONPATTERN)) {
+			StringTokenizer stk = new StringTokenizer(toCheck, "\t");
+			traceCount = (stk.countTokens() - 1) / 2;
 			return true;
 		}
 		for (String pattern : HEADERPATTERNS) {
@@ -61,5 +68,23 @@ public class FileFormatHelper {
 			}
 		}
 		throw new RuntimeException("TNError: Unrecognized input :" + toCheck);
+	}
+	
+	static public TNData[] parseData(String line){
+		if (line.matches(DATAPATTERN)) {
+			TNData[] dataSet = new TNData[traceCount];
+			StringTokenizer stk = new StringTokenizer(line, "\t");
+			double time = Double.parseDouble(stk.nextToken());
+			for (int i = 0; i < traceCount; i++) {
+				dataSet[i] = new TNData(time, stk.nextToken(), stk.nextToken());
+			}
+			return dataSet;
+		} else {
+			return null;
+		}
+	}
+	
+	static public String parseSQL(String line){
+		
 	}
 }

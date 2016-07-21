@@ -17,6 +17,12 @@ public class TNData {
 		this.current = current;
 		this.voltage = voltage;
 	}
+	
+	protected TNData(Double time, String current, String voltage) {
+		this.time = time;
+		this.current = Double.parseDouble(current);
+		this.voltage = Double.parseDouble(voltage);
+	}
 	Boolean isAbstractData(){
 		return time.equals(null);
 	}

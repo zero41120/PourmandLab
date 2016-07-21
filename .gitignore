@@ -16,3 +16,9 @@ SQLiteDataInsertTool/Pourmand.sqlite
 *.properties
 
 *.properties
+
+BioGrapher/bin/edu/pourmand/soe/ucsc/BioGrapher/StringBundles/SBundle_ar.properties
+
+*.properties
+
+*.sqlite

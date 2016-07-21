@@ -40,8 +40,7 @@ public class SQLDatabase extends DataProvider {
 	}
 
 	@Override
-	public void scanData(Double startTime, Double endTime, String name)
-			throws Exception {
+	public void scanData(Double startTime, Double endTime, String name) throws Exception {
 		if (this.isTableExist(db_connect, name)) {
 			// If table exists, scan the table.
 			db_table_name = name;
@@ -50,8 +49,7 @@ public class SQLDatabase extends DataProvider {
 			sqlString += (endTime <= 0.0 ? "" : " AND time <= " + endTime);
 			ResultSet myResultSet = stmt.executeQuery(sqlString);
 			while (myResultSet.next()) {
-				dataSet.add(new TNData(myResultSet.getDouble(1), myResultSet
-						.getDouble(2), myResultSet.getDouble(3)));
+				dataSet.add(new TNData(myResultSet.getDouble(1), myResultSet.getDouble(2), myResultSet.getDouble(3)));
 			}
 		} else {
 			// User probably provided a file path
@@ -61,8 +59,7 @@ public class SQLDatabase extends DataProvider {
 	}
 
 	@Override
-	public void scanData(Double startTime, Double endTime, File inputText)
-			throws Exception {
+	public void scanData(Double startTime, Double endTime, File inputText) throws Exception {
 		/* FILE CHECKING */
 		FileManager.checkExistance(inputText);
 		FileManager.checkHeader(inputText);
@@ -71,19 +68,16 @@ public class SQLDatabase extends DataProvider {
 				InputStreamReader reader = new InputStreamReader(stream, "UTF8");
 				BufferedReader bufferedReader = new BufferedReader(reader)) {
 			String line = "";
-			while ((line = bufferedReader.readLine()) != FileFormatHelper.declrationString) {
-				// Loop to the declaration 
+			while ((line = bufferedReader.readLine()) != null) {
+				TNData[] x = FileFormatHelper.parseData(line);
 			}
 			
 			db_table_name = inputText.getName().replaceAll("\\s+", "_");
 			String sqlString = "CREATE TABLE '" + db_table_name + "' ('Time' DOUBLE, 'pA' DOUBLE, 'mV' DOUBLE)";
 			stmt.executeUpdate(sqlString);
-			
 		} catch (IOException e) {
 			// IO Streams
 		}
-
-		
 
 	}
 
@@ -165,7 +159,7 @@ public class SQLDatabase extends DataProvider {
 		for (TNData data : dataSet) {
 			message += data.toString() + "\n";
 		}
-		
+
 		return message;
 	}
 
