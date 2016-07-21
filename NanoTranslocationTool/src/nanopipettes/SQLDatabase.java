@@ -20,7 +20,7 @@ public class SQLDatabase extends DataProvider {
 
 	Connection db_connect = null;
 	Statement stmt = null;
-	String db_table_name = null;
+	String db_working_table = null;
 	ArrayList<TNData> dataSet = new ArrayList<>();
 	ArrayList<TNPeakData> peakSet = new ArrayList<>();
 
@@ -43,8 +43,8 @@ public class SQLDatabase extends DataProvider {
 	public void scanData(Double startTime, Double endTime, String name) throws Exception {
 		if (this.isTableExist(db_connect, name)) {
 			// If table exists, scan the table.
-			db_table_name = name;
-			String sqlString = "SELECT * FROM " + db_table_name;
+			db_working_table = name.substring(0, name.lastIndexOf('.'));
+			String sqlString = "SELECT * FROM " + db_working_table;
 			sqlString += (startTime <= 0.0 ? " WHERE time >= 0" : " WHERE time >= " + startTime);
 			sqlString += (endTime <= 0.0 ? "" : " AND time <= " + endTime);
 			ResultSet myResultSet = stmt.executeQuery(sqlString);
@@ -69,12 +69,17 @@ public class SQLDatabase extends DataProvider {
 				BufferedReader bufferedReader = new BufferedReader(reader)) {
 			String line = "";
 			while ((line = bufferedReader.readLine()) != null) {
-				TNData[] x = FileFormatHelper.parseData(line);
+				//TNData[] x = FileFormatHelper.parseData(line);
 			}
-			
-			db_table_name = inputText.getName().replaceAll("\\s+", "_");
-			String sqlString = "CREATE TABLE '" + db_table_name + "' ('Time' DOUBLE, 'pA' DOUBLE, 'mV' DOUBLE)";
-			stmt.executeUpdate(sqlString);
+
+			String name = inputText.getName().replaceAll("\\s+", "_");
+			name = name.substring(0, name.lastIndexOf('.'));
+			for (int i = 1; i <= FileFormatHelper.traceCount; i++) {
+				String name_trace = name + "_T" + i;
+				String sqlString = "CREATE TABLE '" + name_trace + "' ('Time' DOUBLE, 'pA' DOUBLE, 'mV' DOUBLE)";
+				stmt.executeUpdate(sqlString);
+			}	
+			db_connect.commit();
 		} catch (IOException e) {
 			// IO Streams
 		}

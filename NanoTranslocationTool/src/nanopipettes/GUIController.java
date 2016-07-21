@@ -50,8 +50,9 @@ public class GUIController implements Initializable {
 		List<File> fileList = chooser.showOpenMultipleDialog(refStage);
 		String ignoreFileTitles = "\n";
 
-		// Execute the state machine when the program receives files
+		// Execute the when the program receives files
 		if (fileList != null) {
+			// For each file, check the header.
 			for (File myFile : fileList) {
 				try {
 					FileManager.checkHeader(myFile);
@@ -59,15 +60,20 @@ public class GUIController implements Initializable {
 					ignoreFileTitles += myFile.getName() + "\n";
 				}
 			}
+			
+			// Show alert for non-compatible files.
 			if (!ignoreFileTitles.equals("\n")) {
 				String alertMessage = "System will ignore the following files:\n";
 				RuntimeException toPrint = new RuntimeException(ignoreFileTitles);
 				showAlertError("Error File", "Unreconized file(s)", alertMessage, toPrint);
 			}
+			
+			// For each file, scan the data and insert to the database.
 			for (File myFile : fileList) {
 				try {
 					DataProvider dP = new SQLDatabase();
 					dP.scanData(0.0, 0.0, myFile);
+					showAlertError("Debug", "debug", "debug", new Exception("nah"));
 				} catch (ClassNotFoundException | SQLException e) {
 					showAlertError("Error", "Database fails to operate", "Report this", e);
 				} catch (Exception e) {

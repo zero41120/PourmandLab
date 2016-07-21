@@ -1,32 +1,10 @@
 package nanopipettes;
 
-import java.lang.invoke.ConstantCallSite;
-import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-import javax.naming.spi.DirStateFactory.Result;
-
-/**
- * This class is a string format checker. For the NanoTranslocationTool program,
- * this format checker will evaluate the input strings. If a string is the
- * output of Dr. Pourmand's research instrument, then the checker does nothing.
- * If a string is not part of reconizable output, the class always throw an
- * exception.
- * 
- * @author Tz-Shiuan Lin
- * 
- */
-public class FileFormatHelper {
-
-	static final String[] HEADERPATTERNS = { "^\".*[^\"]\"$", "^[0-9- \\t]+$",
-			"^ATF[ \\t]+[0-9]*[\\.][0-9]*$", "^\"Signals=\".*$" };
-	static final String DECLRATIONPATTERN = "^\"Time \\(s\\)\"[ \t](\"Trace #[0-9] \\([pAmV]*\\)\"[ \t])+\"Trace #[0-9] \\([mVpA]*\\)\"$";
-	static final String DATAPATTERN = "^[1-9]?[.e\\d]*([ \\t][-.\\d]+){2}(([ \\t]{1}[-.\\d]+){2})*$";
-	static String declrationString = "";
-	static Integer traceCount = 0;
 	//@formatter:off
 	/*
-	 * --The following is an example header--
+	 * --The following is an example header that user inputs--
 	 * ATF	1.0
 	 * 8	11     
 	 * "AcquisitionMode=Episodic Stimulation"
@@ -42,6 +20,26 @@ public class FileFormatHelper {
 	 * "Time (s)"	"Trace #1 (pA)"	"Trace #1 (mV)"	"Trace #2 (pA)"	"Trace #2 (mV)"	"Trace #3 (pA)"	"Trace #3 (mV)"	"Trace #4 (pA)"	"Trace #4 (mV)"	"Trace #5 (pA)"	"Trace #5 (mV)"
 	 */
 	//@formatter:on 
+
+
+/**
+ * This class is a string format checker. For the NanoTranslocationTool program,
+ * this format checker will evaluate the input strings. If a string is the
+ * output of Dr. Pourmand's research instrument, then the checker does nothing.
+ * If a string is not part of reconizable output, the class always throw an
+ * exception.
+ * 
+ * @author Tz-Shiuan Lin
+ * 
+ */
+public class FileFormatHelper {
+	static final String[] HEADERPATTERNS = { "^\".*[^\"]\"$", "^[0-9- \\t]+$",
+			"^ATF[ \\t]+[0-9]*[\\.][0-9]*$", "^\"Signals=\".*$" };
+	static final String DECLRATIONPATTERN = "^\"Time \\(s\\)\"[ \t](\"Trace #[0-9] \\([pAmV]*\\)\"[ \t])+\"Trace #[0-9] \\([mVpA]*\\)\"$";
+	static final String DATAPATTERN = "^[1-9]?[.e\\d]*([ \\t][-.\\d]+){2}(([ \\t]{1}[-.\\d]+){2})*$";
+	static String declrationString = "";
+	static Integer traceCount = 0;
+	
 	
 	/**
 	 * This method checks the input line.
@@ -82,9 +80,5 @@ public class FileFormatHelper {
 		} else {
 			return null;
 		}
-	}
-	
-	static public String parseSQL(String line){
-		
 	}
 }
