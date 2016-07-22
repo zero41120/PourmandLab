@@ -182,5 +182,4 @@ public class SQLDatabase extends DataProvider {
 			return false;
 		}
 	}
-
 }
