@@ -64,6 +64,7 @@ public class GUIController implements Initializable {
 					dP = new SQLDatabase();
 					dP.scanData(0.0, 0.0, myFile);
 				} catch (Exception e) {
+					e.printStackTrace();
 					new GUIAlertErrorException(e.getMessage()).showAlert();
 					dP = null;
 				}

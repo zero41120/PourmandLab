@@ -3,7 +3,6 @@ package nanopipettes;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -60,30 +59,27 @@ public class SQLDatabase extends DataProvider {
 
 	@Override
 	public void scanData(Double startTime, Double endTime, File inputText) throws Exception {
-		/* FILE CHECKING */
+		// Check file
 		FileManager.checkExistance(inputText);
 		FileManager.checkHeader(inputText);
+		Integer lineCount = FileManager.countLines(inputText);
+		Integer progress = 0;
 
-		try (FileInputStream stream = new FileInputStream(inputText);
-				InputStreamReader reader = new InputStreamReader(stream, "UTF8");
-				BufferedReader bufferedReader = new BufferedReader(reader)) {
-			String line = "";
-			while ((line = bufferedReader.readLine()) != null) {
-				//TNData[] x = FileFormatHelper.parseData(line);
-			}
-
-			String name = inputText.getName().replaceAll("\\s+", "_");
-			name = name.substring(0, name.lastIndexOf('.'));
-			for (int i = 1; i <= FileFormatHelper.traceCount; i++) {
-				String name_trace = name + "_T" + i;
-				String sqlString = "CREATE TABLE '" + name_trace + "' ('Time' DOUBLE, 'pA' DOUBLE, 'mV' DOUBLE)";
-				stmt.executeUpdate(sqlString);
-			}	
-			db_connect.commit();
-		} catch (IOException e) {
-			// IO Streams
+		// Create tables and variables
+		ArrayList<String> tableNames = createTables(inputText);
+		String line = "";
+		FileInputStream stream = new FileInputStream(inputText);
+		InputStreamReader reader = new InputStreamReader(stream, "UTF8");
+		BufferedReader bufferedReader = new BufferedReader(reader);
+		
+		// Read and insert data
+		while ((line = bufferedReader.readLine()) != null) {
+			ArrayList<TNData> row = FileFormatHelper.parseData(line);
+			insertDataToTables(tableNames, row);
+			printProgress(lineCount, progress++);
 		}
-
+		db_connect.commit();
+		bufferedReader.close();
 	}
 
 	@Override
@@ -180,6 +176,53 @@ public class SQLDatabase extends DataProvider {
 			return false;
 		} catch (SQLException e) {
 			return false;
+		}
+	}
+
+	private ArrayList<String> createTables(File inputText) throws SQLException {
+		ArrayList<String> tablesNames = new ArrayList<>();
+		String name = inputText.getName().replaceAll("\\s+", "_");
+		name = name.substring(0, name.lastIndexOf('.'));
+		for (int i = 1; i <= FileFormatHelper.traceCount; i++) {
+			String name_trace = name + "_T" + i;
+			String sqlString = "CREATE TABLE '" + name_trace + "' ('Time' DOUBLE, 'pA' DOUBLE, 'mV' DOUBLE)";
+			stmt.executeUpdate(sqlString);
+			tablesNames.add(name_trace);
+		}
+		return tablesNames;
+	}
+
+	/**
+	 * This is a helper method that inserts a row of data to their corresponding
+	 * table.
+	 * 
+	 * @param tables
+	 *            Array of tables
+	 * @param row
+	 *            Row of data
+	 */
+	private void insertDataToTables(ArrayList<String> tables, ArrayList<TNData> row) throws SQLException {
+		for (int i = 0; i < row.size(); i++) {
+			String sql = "INSERT INTO ";
+			sql += "'" + tables.get(i) + "'";
+			sql += " ('Time','pA','mV') VALUES";
+			sql += row.get(i).getSqlValue(true);
+			stmt.executeUpdate(sql);
+		}
+	}
+	
+	private void printProgress(int total, int counter){
+		if (counter % (total/50) == 0) {
+			Double currentProgress = (counter * 100.0 / total);
+			String progString = "[";
+			for (int i = 0; i < currentProgress; i += 5) {
+				progString += "::";
+			}
+			for (int i = 0; i < 100 - currentProgress; i += 5) {
+				progString += "--";
+			}
+			progString += "] " + currentProgress + "%";
+			System.out.print("\r" + progString);
 		}
 	}
 }

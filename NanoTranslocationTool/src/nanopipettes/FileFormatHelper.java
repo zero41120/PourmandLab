@@ -1,5 +1,6 @@
 package nanopipettes;
 
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 	//@formatter:off
@@ -39,7 +40,7 @@ public class FileFormatHelper {
 	static final String DATAPATTERN = "^[1-9]?[.e\\d]*([ \\t][-.\\d]+){2}(([ \\t]{1}[-.\\d]+){2})*$";
 	static String declrationString = "";
 	static Integer traceCount = 0;
-	
+	static Integer fileLineCounter = 0;
 	
 	/**
 	 * This method checks the input line.
@@ -68,17 +69,17 @@ public class FileFormatHelper {
 		throw new RuntimeException("TNError: Unrecognized input :" + toCheck);
 	}
 	
-	static public TNData[] parseData(String line){
+	static public ArrayList<TNData> parseData(String line){
 		if (line.matches(DATAPATTERN)) {
-			TNData[] dataSet = new TNData[traceCount];
+			ArrayList<TNData> dataSet = new ArrayList<>();
 			StringTokenizer stk = new StringTokenizer(line, "\t");
 			double time = Double.parseDouble(stk.nextToken());
 			for (int i = 0; i < traceCount; i++) {
-				dataSet[i] = new TNData(time, stk.nextToken(), stk.nextToken());
+				dataSet.add(i, new TNData(time, stk.nextToken(), stk.nextToken()));
 			}
 			return dataSet;
 		} else {
-			return null;
+			return new ArrayList<TNData>();
 		}
 	}
 }
