@@ -14,6 +14,7 @@ import org.apache.poi.ss.usermodel.charts.ChartLegend;
 import org.apache.poi.ss.usermodel.charts.DataSources;
 import org.apache.poi.ss.usermodel.charts.LegendPosition;
 import org.apache.poi.ss.usermodel.charts.LineChartData;
+import org.apache.poi.ss.usermodel.charts.LineChartSeries;
 import org.apache.poi.ss.usermodel.charts.ValueAxis;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -38,8 +39,7 @@ public class ExcelOutput {
 			setRow(row, mark, names.get(nameIndex));
 			counter++;
 			if (counter % 8 == 0) {
-				createChart(sheet, row.getRowNum());
-				nameIndex++;
+				createChart(sheet, row.getRowNum(), names.get(nameIndex++));
 			}
 		}
 
@@ -63,22 +63,21 @@ public class ExcelOutput {
 	void createFormatedCell(XSSFRow row) {
 		int rowNum = row.getRowNum() + 1;
 		String difFormula = "E" + rowNum + "-C" + rowNum;
-		System.out.println(difFormula);
 		XSSFCell cell = row.createCell(6);
 		cell.setCellType(XSSFCell.CELL_TYPE_FORMULA);
 		cell.setCellFormula(difFormula);
 	}
 
-	void createChart(XSSFSheet sheet, int endRowNum) {
+	void createChart(XSSFSheet sheet, int endRowNum, String name) {
 		Drawing drawing = sheet.createDrawingPatriarch();
-		ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 5, 10, 15);
-
+		ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 7, endRowNum-7, 15, endRowNum);
+		
 		Chart chart = drawing.createChart(anchor);
 		ChartLegend legend = chart.getOrCreateLegend();
 		legend.setPosition(LegendPosition.TOP_RIGHT);
 
 		LineChartData data = chart.getChartDataFactory().createLineChartData();
-
+		
 		// Use a category axis for the bottom axis.
 		ChartAxis bottomAxis = chart.getChartAxisFactory().createCategoryAxis(AxisPosition.BOTTOM);
 		ValueAxis leftAxis = chart.getChartAxisFactory().createValueAxis(AxisPosition.LEFT);
@@ -86,11 +85,12 @@ public class ExcelOutput {
 
 		ChartDataSource<Number> xs = DataSources.fromNumericCellRange(sheet,
 				new CellRangeAddress(endRowNum-7, endRowNum, 5, 5));
-		ChartDataSource<Number> ys1 = DataSources.fromNumericCellRange(sheet,
+		ChartDataSource<Number> ys = DataSources.fromNumericCellRange(sheet,
 				new CellRangeAddress(endRowNum-7, endRowNum, 6, 6));
 		
-		data.addSeries(xs, ys1);
-
+		LineChartSeries dataSeries = data.addSeries(xs, ys);
+		dataSeries.setTitle(name);		
+		
 		chart.plot(data, bottomAxis, leftAxis);
 	}
 }
