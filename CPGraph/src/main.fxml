@@ -12,7 +12,7 @@
 <Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GUIController">
 	<children>
 		<Button fx:id="buttonBrowse" layoutX="122.0" layoutY="14.0" mnemonicParsing="false" onAction="#actionBrowse" text="Browse" />
-		<Button fx:id="buttonRun" layoutX="122.0" layoutY="149.0" mnemonicParsing="false" onAction="#actionRun" text="Run" />
+		<Button fx:id="buttonRun" layoutX="122.0" layoutY="149.0" mnemonicParsing="false" onAction="#actionRun" text="Save" />
       	<Button fx:id="buttonView" layoutX="34.0" layoutY="149.0" mnemonicParsing="false" onAction="#actionView" text="View" />
 	</children>
 </Pane>

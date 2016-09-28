@@ -1,14 +1,15 @@
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +21,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Alert.AlertType;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -31,6 +33,7 @@ public class GUIController implements Initializable {
 	static Stage refStage = null;
 	static ArrayList<File> myFiles = new ArrayList<>();
 	final static Pattern format = Pattern.compile("^([0-9]+.?[0-9]+)\\t([0-9\\-]+.?[0-9]+)\\t([0-9\\-]+.?[0-9]+)$");
+	static String rootDir = null;
 	// @formatter:on
 
 	@Override
@@ -96,15 +99,24 @@ public class GUIController implements Initializable {
 	}
 
 	public void actionRun() {
-		// for each file, scan the target time
+		DirectoryChooser directoryChooser = new DirectoryChooser();
+		File selectedDirectory = directoryChooser.showDialog(refStage);
+		if (selectedDirectory == null) {
+			return;
+		}
+
+		rootDir = selectedDirectory.getAbsolutePath();
+		System.out.println(rootDir);
 		buttonRun.setDisable(true);
 		buttonView.setDisable(false);
+
 		ArrayList<CPMark> marks = new ArrayList<>();
-		
-		for (File file : myFiles) {	
+		ArrayList<String> names = new ArrayList<>();
+
+		for (File file : myFiles) {
 			try (FileInputStream readFile = new FileInputStream(file);
-				InputStreamReader readIn = new InputStreamReader(readFile, "UTF8");
-				BufferedReader readBuffer = new BufferedReader(readIn);) {
+					InputStreamReader readIn = new InputStreamReader(readFile, "UTF8");
+					BufferedReader readBuffer = new BufferedReader(readIn);) {
 				String line = "";
 				CPMark mark = new CPMark();
 				while ((line = readBuffer.readLine()) != null) {
@@ -121,16 +133,38 @@ public class GUIController implements Initializable {
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
-			System.out.println(file.getName());
-			System.out.println(marks);
-			marks = new ArrayList<>();
+			if (marks.size() > 0) {
+				names.add(file.getName());
+			}
 		}
 		
+		ExcelOutput out = new ExcelOutput();
+		try{
+		out.createWorkbook(names, marks, rootDir);
+		} catch (IOException e){
+			e.printStackTrace();
+		}
 	}
 
 	public void actionView() {
-		showAlertInfo("View", "Works");
-
+		// Credit: https://goo.gl/Vtfvd3
+		File file = new File(rootDir);
+		try {
+			if (OSDetector.isWindows()) {
+				Runtime.getRuntime()
+						.exec(new String[] { "rundll32", "url.dll,FileProtocolHandler", file.getAbsolutePath() });
+			} else if (OSDetector.isLinux() || OSDetector.isMac()) {
+				Runtime.getRuntime().exec(new String[] { "/usr/bin/open", file.getAbsolutePath() });
+			} else {
+				// Unknown OS, try with desktop
+				if (Desktop.isDesktopSupported()) {
+					Desktop.getDesktop().open(file);
+				} else {
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace(System.err);
+		}
 	}
 
 	private String getFileExtension(File file) {
@@ -151,27 +185,27 @@ public class GUIController implements Initializable {
 		}
 		return toReturn;
 	}
-	
+
 	/**
-	 * This method set the point of interest.
-	 * When the matcher's first group(time) is the interest point, 
-	 * return second group 
+	 * This method set the point of interest. When the matcher's first
+	 * group(time) is the interest point, return second group
+	 * 
 	 * @return
 	 */
 	private void setInterest(CPMark mark, Matcher matcher) {
-		
-		String[] interestHead = {"17.03", "27.2", "37.01", "47.35", "57.34", "67.25", "77.15", "87.06"};
-		String[] interestTail = {"18.68", "28.41", "38.23", "48.66", "58.73", "68.47", "78.63", "88.45"};
-		
-		if(Arrays.asList(interestHead).contains(matcher.group(1))){
+
+		String[] interestHead = { "17.03", "27.2", "37.01", "47.35", "57.34", "67.25", "77.15", "87.06" };
+		String[] interestTail = { "18.68", "28.41", "38.23", "48.66", "58.73", "68.47", "78.63", "88.45" };
+
+		if (Arrays.asList(interestHead).contains(matcher.group(1))) {
 			mark.setHeadTime(Double.parseDouble(matcher.group(1)));
 			mark.setHeadCurr(Double.parseDouble(matcher.group(2)));
-		} else if(Arrays.asList(interestTail).contains(matcher.group(1))){
+		} else if (Arrays.asList(interestTail).contains(matcher.group(1))) {
 			int num = (int) Double.parseDouble(matcher.group(3));
-			int rounded = ((( num + 99) / 100 ) * 100);
+			int rounded = (((num + 99) / 100) * 100);
 			mark.setTailTime(Double.parseDouble(matcher.group(1)));
 			mark.setTailCurr(Double.parseDouble(matcher.group(2)));
-			mark.setNearPoti(rounded+0.0);
-		}			
+			mark.setNearPoti(rounded + 0.0);
+		}
 	}
 }
