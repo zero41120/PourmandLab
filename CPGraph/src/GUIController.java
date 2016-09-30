@@ -55,7 +55,7 @@ public class GUIController implements Initializable {
 	public static boolean createMainScreen(Stage primaryStage) {
 		try {
 			Parent root = FXMLLoader.load(Main.class.getResource("main.fxml"));
-			primaryStage.setTitle("Cool program");
+			primaryStage.setTitle("CPGrapher 1.1");
 			primaryStage.setScene(new Scene(root));
 			primaryStage.show();
 			System.out.println("Program starts");
@@ -100,6 +100,7 @@ public class GUIController implements Initializable {
 
 	public void actionRun() {
 		DirectoryChooser directoryChooser = new DirectoryChooser();
+		directoryChooser.setTitle("Select location to save output");
 		File selectedDirectory = directoryChooser.showDialog(refStage);
 		if (selectedDirectory == null) {
 			return;

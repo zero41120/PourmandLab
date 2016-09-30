@@ -27,7 +27,10 @@ public class ExcelOutput {
 
 	void createWorkbook(ArrayList<String> names, ArrayList<CPMark> marks, String rootDir) throws IOException {
 		Date date = new Date();
-		FileOutputStream fileOut = new FileOutputStream(rootDir + "/" + date + ".xlsx");
+		String dateTrim = date.toString().replaceAll("\\s", "_");
+		dateTrim = dateTrim.toString().replaceAll(":", "-");
+
+		FileOutputStream fileOut = new FileOutputStream(rootDir + "/" + dateTrim + ".xlsx");
 
 		Integer rowCounter = 0;
 
@@ -62,7 +65,7 @@ public class ExcelOutput {
 
 	void createFormatedCell(XSSFRow row) {
 		int rowNum = row.getRowNum() + 1;
-		String difFormula = "E" + rowNum + "-C" + rowNum;
+		String difFormula = "C" + rowNum + "-E" + rowNum;
 		XSSFCell cell = row.createCell(6);
 		cell.setCellType(XSSFCell.CELL_TYPE_FORMULA);
 		cell.setCellFormula(difFormula);
