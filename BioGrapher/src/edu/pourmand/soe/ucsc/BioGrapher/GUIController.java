@@ -149,10 +149,8 @@ public class GUIController implements Initializable {
 
 	}
 
-
 	/**
-	 * This is the method which exports the data on the graph to a .txt
-	 * file.
+	 * This is the method which exports the data on the graph to a .txt file.
 	 */
 	public void actionExportCalibration() {
 
@@ -198,6 +196,7 @@ public class GUIController implements Initializable {
 		// Update the report on screen
 		printReport();
 	}
+
 	/**
 	 * This is the method which graphs the Peak Current Plot.
 	 */
@@ -226,6 +225,7 @@ public class GUIController implements Initializable {
 			seriesThreads.join();
 		}
 	}
+
 	public void actionCalibrationPlot_Type1() throws InterruptedException {
 		// Removes any graph on the screen and checks if data exists.
 		removeGraph();
@@ -233,7 +233,7 @@ public class GUIController implements Initializable {
 		if (!isDataExists()) {
 			return;
 		}
-		showAlertVoltage("asdf", "asdf", "413");
+		showAlertVoltage("Estimate", "Enter target voltage to get reference data.", "413");
 		displayingCalibration_Type1 = true;
 		// Enables Estimate button.
 		btnEstimateConcentration.setDisable(false);
@@ -244,7 +244,7 @@ public class GUIController implements Initializable {
 		chartMainChart.setCreateSymbols(false);
 		charMainxAxis.setAutoRanging(true);
 		charMainyAxis.setForceZeroInRange(false);
-		charMainxAxis.setLabel("Voltage (mV)");
+		charMainxAxis.setLabel("Concentration");
 		charMainyAxis.setLabel("Current (nA)");
 
 		// Creates multiple threads to get the data from collection.
@@ -1000,55 +1000,63 @@ public class GUIController implements Initializable {
 
 	/**
 	 * This is the method what calculates the linear regression of the data.
-	 * Estimated Y = Y intersect + Slope * X. \\ Slope = Variance of X / Product
-	 * of the average distance to the mean of X and Y \\ Y intersect = averageY
-	 * - averageX * slope \\
 	 * 
-	 * @return the XYChart Series with (0,Y intersect), (Mean of X, Mean of Y),
-	 *         and (Max X, Estimated Y).
+	 * @return the XYChart Series with linear regression.
 	 */
 	private XYChart.Series<Number, Number> calculateLinearRegression() {
 
 		ObservableList<Series<Number, Number>> series = chartMainChart.getData();
 		List<Double> xValue = new ArrayList<Double>();
-		List<Double> xNormal = new ArrayList<Double>();
-		List<Double> xSquare = new ArrayList<Double>();
 		List<Double> yValue = new ArrayList<Double>();
-		List<Double> yNormal = new ArrayList<Double>();
-		List<Double> xyNormalProduct = new ArrayList<Double>();
-		Double yIntersect = 0.0;
-		Double xMax = 0.0;
-
 		for (Series<Number, Number> s : series) {
 			xValue.add(Double.parseDouble(s.getData().get(0).getXValue().toString()));
 			yValue.add(Double.parseDouble(s.getData().get(0).getYValue().toString()));
 		}
-		Double averageX = xValue.stream().mapToDouble(a -> a).average().getAsDouble();
-		Double averageY = yValue.stream().mapToDouble(a -> a).average().getAsDouble();
-		System.out.println(averageX);
-		System.out.println(averageY);
 
-		for (int i = 0; i < xValue.size(); i++) {
-			xNormal.add(xValue.get(i) / averageX);
-			xSquare.add(xNormal.get(i) * xNormal.get(i));
-			yNormal.add(yValue.get(i) / averageY);
-			xyNormalProduct.add(xNormal.get(i) * yNormal.get(i));
+		Integer elementCount = xValue.size();
+		Double xMax = Collections.max(xValue), xMin = Collections.min(xValue);
+	
+		Double ySum = 0.0, xSum = 0.0, xSquSum = 0.0, ySquSum = 0.0;
+		Double yIntersect = 0.0, slope = 0.0, correlation = 0.0;
+		Double a = 0.0, b = 0.0, c = 0.0, d = 0.0, e = 0.0, f = 0.0, n = 0.0, m = 0.0;
+
+		for (int i = 0; i < elementCount; i++) {
+			a += (xValue.get(i) * yValue.get(i));
+			ySum += yValue.get(i);
+			xSum += xValue.get(i);
+			xSquSum += xValue.get(i) * xValue.get(i);
+			ySquSum += yValue.get(i) * yValue.get(i);
 		}
+		a *= elementCount;
+		b = ySum * xSum;
+		c = elementCount * xSquSum;
+		d = xSum * xSum;
+		slope = (a - b) / (c - d);
 
-		Double slope = xSquare.stream().mapToDouble(a -> a).average().getAsDouble()
-				/ xyNormalProduct.stream().mapToDouble(a -> a).average().getAsDouble();
-		yIntersect = averageY - averageX * slope;
-
+		e = ySum;
+		f = slope * xSum;
+		yIntersect = (e - f) / elementCount;
+		
+		n = a - b;
+		n *= n;
+		m = (elementCount * xSquSum - d)*(elementCount * ySquSum - e*e);
+		correlation = n / m;
+		// Line equation y = slope * x + yIntersect;
+		// Correlation R^2 = [(count * xySum - xSumySum)^2]/[(count * xSqlSum - xSumxSum)(count * y^2sum - ySUmySum)]
+		
+		
 		dP.setYIntersect(yIntersect);
 		dP.setSlope(slope);
-		xMax = Collections.max(xValue);
-		XYChart.Series<Number, Number> regression = new Series<>();
-		regression.getData().add(new XYChart.Data<Number, Number>(0, yIntersect));
-		regression.getData().add(new XYChart.Data<Number, Number>(averageX, averageY));
-		regression.getData().add(new XYChart.Data<Number, Number>(xMax, yIntersect + slope * xMax));
-		regression.setName("Linear regression");
-
-		return regression;
+		XYChart.Series<Number, Number> line = new Series<>();
+		
+		line.getData().add(new XYChart.Data<Number, Number>(xMin, slope * xMin + yIntersect));
+		line.getData().add(new XYChart.Data<Number, Number>(xMax, slope * xMax + yIntersect));
+		
+		String slopeString = String.format("y = %.2fx + ", slope); 
+		String yIntersectString = String.format("%.2f", yIntersect); 
+		String correlationString = String.format("\nR² = %.6f", correlation);
+		line.setName(slopeString + yIntersectString + correlationString);
+		return line;
 	}
 
 	private Double getEstimatedXvalue(Double yValue) {
