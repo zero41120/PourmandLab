@@ -24,3 +24,5 @@ BioGrapher/bin/edu/pourmand/soe/ucsc/BioGrapher/StringBundles/SBundle_ar.propert
 *.sqlite
 
 BioGrapher/BioTemp.bgt
+
+*.bgt
