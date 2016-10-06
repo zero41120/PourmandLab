@@ -2,55 +2,59 @@ package edu.pourmand.soe.ucsc.BioGrapher;
 
 import java.util.List;
 
-public class DataListCollection{
+public class DataListCollection {
 	private String fileTitle;
 	private String filePath;
 	private Double concentration;
-	private List<DataType_1> listType_1;
-	private List<DataType_2> listType_2;
-	private List<DataType_3> listType_3;
+	private Integer type;
+	private List<? extends AutoDataType> listAutoType;
 
-	
 	public String getFileTitle() {
 		return fileTitle;
 	}
+
 	public void setFileTitle(String fileTitle) {
 		this.fileTitle = fileTitle;
 	}
-	public List<DataType_1> getListType_1() {
-		return listType_1;
+	
+	public void setListAuto(List<? extends AutoDataType> toSave, Integer whichType){
+		type = whichType;
+		listAutoType = toSave;
 	}
-	public void setListType_1(List<DataType_1> listType_1) {
-		this.listType_1 = listType_1;
+
+	public List<? extends AutoDataType> getListAuto() {
+		return listAutoType;
 	}
-	public List<DataType_2> getListType_2() {
-		return listType_2;
+	
+	public Integer getType() {
+		return type;
 	}
-	public void setListType_2(List<DataType_2> listType_2) {
-		this.listType_2 = listType_2;
+
+	public void setType(Integer type) {
+		this.type = type;
 	}
+
 	public Double getConcentration() {
 		return concentration;
 	}
+
 	public void setConcentration(Double concentration) {
 		this.concentration = concentration;
 	}
+
 	public String getFilePath() {
 		return filePath;
 	}
+
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
 	}
-	public List<DataType_3> getListType_3() {
-		return listType_3;
-	}
-	public void setListType_3(List<DataType_3> listType_3) {
-		this.listType_3 = listType_3;
-	}
-	
+
 }
 
-class DataType_1 {
+abstract class AutoDataType { }
+
+class DataType_1 extends AutoDataType {
 	private double voltage;
 	private double currnet;
 
@@ -84,8 +88,7 @@ class DataType_1 {
 	}
 }
 
-
-class DataType_2 {
+class DataType_2 extends AutoDataType {
 
 	private double time;
 	private double averageVol;
@@ -93,7 +96,7 @@ class DataType_2 {
 	protected DataType_2(double time, double trace_1_mV, double trace_1_pA, double trace_2_mV, double trace_2_pA,
 			double trace_3_mV, double trace_3_pA) {
 		this.time = time;
-		this.averageVol = (trace_1_mV + trace_2_mV + trace_3_mV)/3;
+		this.averageVol = (trace_1_mV + trace_2_mV + trace_3_mV) / 3;
 	}
 
 	protected DataType_2(String time, String trace_1_mV, String trace_1_pA, String trace_2_mV, String trace_2_pA,
@@ -102,7 +105,7 @@ class DataType_2 {
 		Double d = Double.parseDouble(trace_1_mV);
 		d += Double.parseDouble(trace_2_mV);
 		d += Double.parseDouble(trace_3_mV);
-		this.averageVol = (d)/3;
+		this.averageVol = (d) / 3;
 	}
 
 	protected double getTime() {
@@ -123,38 +126,43 @@ class DataType_2 {
 
 }
 
-class DataType_3{
+class DataType_3 extends AutoDataType {
 	private double time;
 	private double voltage;
 	private double current;
-	
+
 	protected DataType_3(double time, double current, double voltage) {
 		this.time = time;
 		this.current = current;
 		this.voltage = voltage;
 	}
-	
+
 	protected DataType_3(String time, String current, String voltage) {
 		this.time = Double.parseDouble(time);
 		this.current = Double.parseDouble(current);
 		this.voltage = Double.parseDouble(voltage);
 	}
-	
+
 	public double getTime() {
 		return time;
 	}
+
 	public void setTime(double time) {
 		this.time = time;
 	}
+
 	public double getVoltage() {
 		return voltage;
 	}
+
 	public void setVoltage(double voltage) {
 		this.voltage = voltage;
 	}
+
 	public double getCurrent() {
 		return current;
 	}
+
 	public void setCurrent(double current) {
 		this.current = current;
 	}

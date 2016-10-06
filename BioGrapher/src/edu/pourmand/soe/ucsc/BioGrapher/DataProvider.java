@@ -7,55 +7,28 @@ class DataProvider {
 
 	public static DataProvider dP = new DataProvider();
 	private static DataAnalyzer dA = new DataAnalyzer();
-	private List<DataListCollection> mainList = null;
 
+	private List<DataListCollection> mainList = null;
 	private List<File> workingFiles = null;
 	private List<Double> workingConcentration = null;
 	private String currentType = null;
 	private Integer pathCounter = 0;
-	private boolean isVariableValid = false;
+	private Boolean isVariableValid = false;
 	private Double yIntersect;
 	private Double slope;
 	private Double type1Voltage = null;
 
-	public Double getFileSizeType1() {
-		Double counterT1 = 0.0;
-		try {
-			if (getDataCollection() != null) {
-				for (DataListCollection dataList : mainList) {
-					if (dataList.getListType_2() != null) {
-						counterT1 += dataList.getListType_1().size();
-					}
-				}
-			}
-		} catch (Exception e) {
-			counterT1 = 1.0;
-		}
-		return counterT1;
-	}
-
-	public Double getFileSizeType2() {
-		Double counterT2 = 0.0;
-		if (getDataCollection() != null) {
-			for (DataListCollection dataList : mainList) {
-				if (dataList.getListType_2() != null) {
-					counterT2 += dataList.getListType_2().size();
-				}
-			}
-		}
-		return counterT2;
-	}
 	
-	public Double getFileSizeType3() {
-		Double counterT3 = 0.0;
+	public Double getFileSize(Integer whichType){
+		Double counter = 0.0;
 		if (getDataCollection() != null) {
 			for (DataListCollection dataList : mainList) {
-				if (dataList.getListType_3() != null) {
-					counterT3 += dataList.getListType_3().size();
+				if (dataList.getType().equals(whichType)) {
+					counter += dataList.getListAuto().size();
 				}
 			}
 		}
-		return counterT3;
+		return counter;
 	}
 
 	/**
@@ -159,14 +132,13 @@ class DataProvider {
 			int counter = 1;
 			for (DataListCollection dataList : mainList) {
 				message += dataList.getConcentration() + " : " + dataList.getFileTitle();
-				message += counter++ % 5 == 0? "\n": " | ";
+				message += counter++ % 5 == 0 ? "\n" : " | ";
 			}
 
 		}
-		
+
 		return message;
 	}
-	
 
 	/*
 	 * Methods below are getters and setters.
@@ -235,19 +207,19 @@ class DataProvider {
 	public void setWorkingConcentration(List<Double> workingConcentration) {
 		this.workingConcentration = workingConcentration;
 	}
-	
+
 	public Double getYIntersect() {
 		return yIntersect;
 	}
-	
+
 	public void setYIntersect(Double yIntersect) {
 		this.yIntersect = yIntersect;
 	}
-	
+
 	public Double getSlope() {
 		return slope;
 	}
-	
+
 	public void setSlope(Double slope) {
 		this.slope = slope;
 	}

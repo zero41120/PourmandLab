@@ -30,6 +30,8 @@ public class DataFileManager {
 	 * program opened in the previous operation.
 	 * 
 	 * @return true if the BioTemp.bgt exist.
+	 * 
+	 * @bug If files in .bgt files no longer exists, program will not function.
 	 */
 	protected boolean checkPathFile() {
 		/*

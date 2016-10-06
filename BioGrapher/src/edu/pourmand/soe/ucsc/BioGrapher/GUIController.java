@@ -89,7 +89,7 @@ public class GUIController implements Initializable {
 
 	static Exception globalException = new Exception("Default Error");
 	static Double progressCounter = 0.0;
-	static Boolean disPlayingLinearRegression = false;
+	static Boolean displayingLinearRegression = false;
 	static Boolean displayingCalibration_Type2 = false;
 	static Boolean displayingCalibration_Type1 = false;
 	static Boolean displayingComparision = false;
@@ -100,11 +100,8 @@ public class GUIController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-
 		// Loads all GUI texts into the GUI elements.
 		changeLangauge(StateMachine.l);
-
-		// Disable the buttons.
 		disableFunctionButtons();
 
 	}
@@ -392,9 +389,9 @@ public class GUIController implements Initializable {
 	 */
 	public void actionEstimateConcentration() {
 		// Calculates linear regression
-		if (!disPlayingLinearRegression) {
+		if (!displayingLinearRegression) {
 			chartMainChart.getData().add(calculateLinearRegression());
-			disPlayingLinearRegression = true;
+			displayingLinearRegression = true;
 		}
 
 		// Adds the estimate value on the graph and label
@@ -729,28 +726,127 @@ public class GUIController implements Initializable {
 		tipaDataProviderStatus.setText(msg.getString("<GUITEXT>TitledPaneDataProviderStatus"));
 	}
 
+	private void createCalibrationSeries(DataListCollection refCollection, Integer whichType) {
+		// Reject other type
+		if (!refCollection.getType().equals(whichType)) {
+			return;
+		}
+
+		// Creates the series for the plots on the chart.
+		SeriesEssential mySeries = new SeriesEssential(refCollection);
+
+		// Gets data from the reference file and updates the progress bar.
+		switch (whichType) {
+		case 1:
+			seriesSetCalibrationType_1(refCollection, mySeries);
+			break;
+		case 2:
+			seriesSetCalibrationType_2(refCollection, mySeries);
+			break;
+
+		default:
+			throw new RuntimeException("Calibration unknow type: " + whichType);
+		}
+
+		// Creates the label on the plots
+		Text text = new Text(mySeries.valueTag);
+		text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
+		mySeries.myData.setNode(text);
+
+		// Add the series in correct thread when done.
+		Platform.runLater(() -> {
+			chartMainChart.getData().add(mySeries.series);
+		});
+
+	}
+
+	private void seriesSetCalibrationType_2(DataListCollection refCollection, SeriesEssential mySeries) {
+
+		// Gets data from time ranged from 40~45.
+		Double sampleSize = 0.0, sampleTotal = 0.0;
+		for (AutoDataType autoData : refCollection.getListAuto()) {
+			if(!(autoData instanceof DataType_2)){
+				throw new RuntimeException("Fail to convert autotype");
+			}
+			DataType_2 refType_2 = (DataType_2) autoData;
+			if (refType_2.getTime() > 40.0 && refType_2.getTime() < 45) {
+				sampleSize++;
+				sampleTotal += refType_2.getAverageVol();
+			}
+			synchronized (progressCounter) {
+				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSize(2));
+			}
+		}
+		Double averageVoltage = sampleTotal / sampleSize;
+		System.out.println(averageVoltage + " for " + refCollection.getFileTitle());
+		mySeries.myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(), averageVoltage);
+		mySeries.series.getData().add(mySeries.myData);
+		mySeries.name = refCollection.getConcentration() + " : " + new DecimalFormat("##.##").format(averageVoltage);
+		mySeries.series.setName(mySeries.name);
+
+		// Creates the label on the plots
+		String value = "(" + refCollection.getConcentration().toString() + " : ";
+		value += new DecimalFormat("##.##").format(averageVoltage) + ")";
+		Text text = new Text(value);
+		text.setTranslateY(-10 + text.getLayoutBounds().getHeight() / 2);
+		text.setTranslateX(45);
+		mySeries.myData.setNode(text);
+	}
+
+	private void seriesSetCalibrationType_1(DataListCollection refCollection, SeriesEssential mySeries) {
+		// Gets data from the reference file and updates the progress bar.
+		for (AutoDataType autoType : refCollection.getListAuto()) {
+			if (!(autoType instanceof DataType_1)) {
+				throw new RuntimeException("Fail to convert to type 1");
+			} else {
+				DataType_1 dataType_1 = (DataType_1) autoType;
+				if (dataType_1.getVoltage() == dP.getType1Voltage()) {
+					mySeries.myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(),
+							dataType_1.getCurrnet());
+					mySeries.series.getData().add(mySeries.myData);
+					mySeries.valueTag = "      (" + refCollection.getConcentration().toString() + " : "
+							+ new DecimalFormat("##.##").format(dataType_1.getCurrnet()) + ")";
+					System.out.println(mySeries.valueTag);
+
+				}
+				synchronized (progressCounter) {
+					pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSize(1));
+				}
+			}
+		}
+	}
+
 	private void createSeries_Type_1_Calibration(DataListCollection refCollection) {
-		if (refCollection.getListType_1() == null) {
+		// Reject type other than 1
+		if (!refCollection.getType().equals(1)) {
 			return;
 		}
 
 		// Creates the series for the plots on the chart.
 		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
-		series.setName(refCollection.getConcentration() + " : " + refCollection.getFileTitle());
+		String seriesName = refCollection.getConcentration() + " : " + refCollection.getFileTitle();
+		series.setName(seriesName);
 		XYChart.Data<Number, Number> myData = new XYChart.Data<>();
 		String value = "";
-		// Gets data from the reference file and updates the progress bar.
-		for (DataType_1 refType_1 : refCollection.getListType_1()) {
-			if (refType_1.getVoltage() == dP.getType1Voltage()) {
-				myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(), refType_1.getCurrnet());
-				series.getData().add(myData);
-				value = "      (" + refCollection.getConcentration().toString() + " : "
-						+ new DecimalFormat("##.##").format(refType_1.getCurrnet()) + ")";
-				System.out.println(value);
 
-			}
-			synchronized (progressCounter) {
-				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType1());
+		// Gets data from the reference file and updates the progress bar.
+		for (AutoDataType autoType : refCollection.getListAuto()) {
+			if (!(autoType instanceof DataType_1)) {
+				throw new RuntimeException("Fail to convert to type 1");
+			} else {
+				DataType_1 dataType_1 = (DataType_1) autoType;
+				if (dataType_1.getVoltage() == dP.getType1Voltage()) {
+					myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(),
+							dataType_1.getCurrnet());
+					series.getData().add(myData);
+					value = "      (" + refCollection.getConcentration().toString() + " : "
+							+ new DecimalFormat("##.##").format(dataType_1.getCurrnet()) + ")";
+					System.out.println(value);
+
+				}
+				synchronized (progressCounter) {
+					pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSize(1));
+				}
 			}
 		}
 
@@ -775,8 +871,8 @@ public class GUIController implements Initializable {
 	 *            DataListCollection witch contains the data.
 	 */
 	private void createSeries_Type_1_Comparison(DataListCollection refCollection) {
-		// Rejects type 1,2.
-		if (refCollection.getListType_1() == null) {
+		// Rejects type other than 1
+		if (!refCollection.getType().equals(1)) {
 			return;
 		}
 
@@ -980,7 +1076,7 @@ public class GUIController implements Initializable {
 		displayingCalibration_Type1 = false;
 		displayingPeakCurrent = false;
 		displayingComparision = false;
-		disPlayingLinearRegression = false;
+		displayingLinearRegression = false;
 		while (!chartMainChart.getData().isEmpty()) {
 			chartMainChart.getData().remove(chartMainChart.getData().size() - 1);
 		}
@@ -1015,7 +1111,7 @@ public class GUIController implements Initializable {
 
 		Integer elementCount = xValue.size();
 		Double xMax = Collections.max(xValue), xMin = Collections.min(xValue);
-	
+
 		Double ySum = 0.0, xSum = 0.0, xSquSum = 0.0, ySquSum = 0.0;
 		Double yIntersect = 0.0, slope = 0.0, correlation = 0.0;
 		Double a = 0.0, b = 0.0, c = 0.0, d = 0.0, e = 0.0, f = 0.0, n = 0.0, m = 0.0;
@@ -1036,24 +1132,24 @@ public class GUIController implements Initializable {
 		e = ySum;
 		f = slope * xSum;
 		yIntersect = (e - f) / elementCount;
-		
+
 		n = a - b;
 		n *= n;
-		m = (elementCount * xSquSum - d)*(elementCount * ySquSum - e*e);
+		m = (elementCount * xSquSum - d) * (elementCount * ySquSum - e * e);
 		correlation = n / m;
 		// Line equation y = slope * x + yIntersect;
-		// Correlation R^2 = [(count * xySum - xSumySum)^2]/[(count * xSqlSum - xSumxSum)(count * y^2sum - ySUmySum)]
-		
-		
+		// Correlation R^2 = [(count * xySum - xSumySum)^2]/[(count * xSqlSum -
+		// xSumxSum)(count * y^2sum - ySUmySum)]
+
 		dP.setYIntersect(yIntersect);
 		dP.setSlope(slope);
 		XYChart.Series<Number, Number> line = new Series<>();
-		
+
 		line.getData().add(new XYChart.Data<Number, Number>(xMin, slope * xMin + yIntersect));
 		line.getData().add(new XYChart.Data<Number, Number>(xMax, slope * xMax + yIntersect));
-		
-		String slopeString = String.format("y = %.2fx + ", slope); 
-		String yIntersectString = String.format("%.2f", yIntersect); 
+
+		String slopeString = String.format("y = %.2fx + ", slope);
+		String yIntersectString = String.format("%.2f", yIntersect);
 		String correlationString = String.format("\nR² = %.6f", correlation);
 		line.setName(slopeString + yIntersectString + correlationString);
 		return line;
@@ -1281,4 +1377,18 @@ class NumberTextField extends TextField {
 		return text.matches("[0-9.]*");
 
 	}
+}
+
+class SeriesEssential {
+
+	final XYChart.Series<Number, Number> series;
+	XYChart.Data<Number, Number> myData;
+	String valueTag = "No value";
+	String name = "No name";
+	
+	public SeriesEssential(DataListCollection refCollection) {
+		series = new XYChart.Series<Number, Number>();
+		myData = new XYChart.Data<>();
+	}
+
 }

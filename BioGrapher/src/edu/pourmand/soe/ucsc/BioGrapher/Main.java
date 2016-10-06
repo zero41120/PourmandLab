@@ -5,7 +5,7 @@
 * 
 *
 * @author  Tz-Shiuan Lin, Thomas Boser.
-* @version 1.2
+* @version 4
 * @since   2016-01-20 
 */
 
@@ -22,22 +22,16 @@ import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.msg;
 
 public class Main extends Application {
 
-
-
+	/**
+	 * JavaFX is activated via Application.launch()
+	 * launch() will prepare the GUI and call start()
+	 */
 	public static void main(String[] args) {
 		Application.launch(args);
 	}
-
-	private void checkPreviousStage() {
-		if (GUIController.fM.checkPathFile()) {
-			// Alerts the user if path file exists.
-			sM.isAlertLoadPathConfirmed = GUIController.showAlertConfrimation( //
-					msg.getString("<GUITEXT>TitleConfirm"), //
-					msg.getString("<GUITEXT>HeaderConfirm_LoadPathFile"), //
-					msg.getString("<GUITEXT>ContentConfirm_LoadPathFile"));
-		}
-	}
-
+	/**
+	 * This method makes starts the GUI and execute the state machine.
+	 */
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		sM.running = createMainScreen(primaryStage);
@@ -45,6 +39,7 @@ public class Main extends Application {
 		checkPreviousStage();
 		GUIController.executeStateMachine();
 	}
+	
 
 	/**
 	 * This is the method which generates a main window.
@@ -68,4 +63,20 @@ public class Main extends Application {
 			return false;
 		}
 	}
+	
+	/**
+	 * This method checks .bgt file to restore previous stage.
+	 */
+	private void checkPreviousStage() {
+		if (GUIController.fM.checkPathFile()) {
+			// Alerts the user if path file exists.
+			sM.isAlertLoadPathConfirmed = GUIController.showAlertConfrimation( //
+					msg.getString("<GUITEXT>TitleConfirm"), //
+					msg.getString("<GUITEXT>HeaderConfirm_LoadPathFile"), //
+					msg.getString("<GUITEXT>ContentConfirm_LoadPathFile"));
+		}
+	}
+
+	
+
 }
