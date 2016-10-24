@@ -65,27 +65,14 @@ public class DataAnalyzer {
 		switch (dataType) {
 		case "Type1":
 			DataType_1 pivot1 = searchDataType_1_Pivot(refFile);
-			List<DataType_1> myDataArray_1 = createDataType_1_Array(refFile, pivot1);
-			dataList.setListType_1(myDataArray_1);
-			dataList.setFilePath(refFile.getAbsolutePath());
-			myDataListCollections.add(dataList);
-			tempProvider.setMainList(myDataListCollections);
-			return tempProvider;
+			dataList.setListAuto(createDataType_1_Array(refFile, pivot1), 1);
+			break;
 		case "Type2":
-			List<DataType_2> myDataArray_2 = createDataType_2_Array(refFile);
-			dataList.setListType_2(myDataArray_2);
-			dataList.setFilePath(refFile.getAbsolutePath());
-			myDataListCollections.add(dataList);
-			tempProvider.setMainList(myDataListCollections);
-			return tempProvider;
-
+			dataList.setListAuto(createDataType_2_Array(refFile), 2);
+			break;
 		case "Type3":
-			List<DataType_3> myDataArray_3 = createDataType_3_Array(refFile);
-			dataList.setListType_3(myDataArray_3);
-			dataList.setFilePath(refFile.getAbsolutePath());
-			myDataListCollections.add(dataList);
-			tempProvider.setMainList(myDataListCollections);
-			return tempProvider;
+			dataList.setListAuto(createDataType_3_Array(refFile), 3);
+			break;
 		case "PathType":
 			FileConcetrationList myFC = this.getFilesFromPathFile(refFile);
 			tempProvider.setWorkingFiles(myFC.getMyFiles());
@@ -95,7 +82,10 @@ public class DataAnalyzer {
 			// File is not a valid type, ask user to re-enter file.
 			break;
 		}
-		return null;
+		dataList.setFilePath(refFile.getAbsolutePath());
+		myDataListCollections.add(dataList);
+		tempProvider.setMainList(myDataListCollections);
+		return tempProvider;
 	}
 
 	/**

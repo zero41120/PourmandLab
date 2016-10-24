@@ -29,6 +29,7 @@ import javafx.scene.text.TextFlow;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 
 import static java.lang.System.out;
@@ -53,36 +54,20 @@ import static edu.pourmand.soe.ucsc.BioGrapher.StateMachine.msg;
 
 public class GUIController implements Initializable {
 	// @formatter:off
-	@FXML Menu menFile; 
-	@FXML Menu menEdit; 
-	@FXML Menu menHelp; 
-	@FXML Menu menLanguage;
-	@FXML MenuItem meitBrowse; 
-	@FXML MenuItem meitClearData;
-	@FXML MenuItem meitExportData; 
-	@FXML MenuItem meitPlot1;
-	@FXML MenuItem meitPlot2; 
-	@FXML MenuItem meitPlot3;
-	@FXML MenuItem meitPlot4; 
-	@FXML MenuItem meitEdit;
-	@FXML MenuItem meitAbout;
-	@FXML Button btnEdit; 
-	@FXML Button btnBrowse; 
-	@FXML Button btnClearData;
-	@FXML Button btnCalibrationType2; 
-	@FXML Button btnComparisonPlot;
-	@FXML Button btnCalibrationType1; 
-	@FXML Button btnReloadStatus; 
-	@FXML Button btnPeakCurrentPlot; 
+	@FXML Menu menFile, menEdit, menHelp, menLanguage;
+	@FXML MenuItem meitBrowse, meitClearData, meitExportData; 
+	@FXML MenuItem meitPlot1, meitPlot2, meitPlot3, meitPlot4; 
+	@FXML MenuItem meitEdit, meitAbout;
+	@FXML Button btnEdit, btnBrowse; 
+	@FXML Button btnClearData, btnReloadStatus;
+	@FXML Button btnCalibrationType1, btnCalibrationType2; 
+	@FXML Button btnComparisonPlot, btnPeakCurrentPlot;
 	@FXML Button btnEstimateConcentration;
 	@FXML TextField txfCInputCharge; 
 	@FXML TextFlow txfwReport; 
-	@FXML Label labEstimateConcentration; 
-	@FXML Label labInputCharge; 
-	@FXML TitledPane tipaConcentration; 
-	@FXML TitledPane tipaDataProviderStatus;
-	@FXML NumberAxis charMainxAxis; 
-	@FXML NumberAxis charMainyAxis;
+	@FXML Label labEstimateConcentration, labInputCharge; 
+	@FXML TitledPane tipaConcentration, tipaDataProviderStatus;
+	@FXML NumberAxis charMainxAxis, charMainyAxis;
 	@FXML ProgressBar pbMainProgressBar; 
 	@FXML LineChart<Number, Number> chartMainChart;
 	// @formatter:on
@@ -206,6 +191,7 @@ public class GUIController implements Initializable {
 
 		// Initializes some default value for the progress.
 		displayingPeakCurrent = true;
+		btnEstimateConcentration.setDisable(true);
 		pbMainProgressBar.setProgress(0);
 		progressCounter = 0.0;
 		// Initializes some default value for the graph.
@@ -247,7 +233,7 @@ public class GUIController implements Initializable {
 		// Creates multiple threads to get the data from collection.
 		if (dP.getType1Voltage() != null) {
 			for (DataListCollection refDataList : dP.getDataCollection()) {
-				Thread seriesThreads = new Thread(() -> createSeries_Type_1_Calibration(refDataList));
+				Thread seriesThreads = new Thread(() -> createCalibrationSeries(refDataList, 1));
 				seriesThreads.start();
 			}
 		}
@@ -278,7 +264,7 @@ public class GUIController implements Initializable {
 
 		// Creates multiple threads to get the data from collection.
 		for (DataListCollection refDataList : dP.getDataCollection()) {
-			Thread seriesThreads = new Thread(() -> createSeries_Type_2(refDataList));
+			Thread seriesThreads = new Thread(() -> createCalibrationSeries(refDataList, 2));
 			seriesThreads.start();
 		}
 
@@ -726,11 +712,16 @@ public class GUIController implements Initializable {
 		tipaDataProviderStatus.setText(msg.getString("<GUITEXT>TitledPaneDataProviderStatus"));
 	}
 
+	/**
+	 * This is a private method that will be ran by multiple tread. This method
+	 * gets data from the reference data collection and adds it into the series.
+	 * The program will add the series into the chart using runLater to run it
+	 * on the main thread.
+	 */
 	private void createCalibrationSeries(DataListCollection refCollection, Integer whichType) {
 		// Reject other type
-		if (!refCollection.getType().equals(whichType)) {
+		if (!refCollection.getType().equals(whichType))
 			return;
-		}
 
 		// Creates the series for the plots on the chart.
 		SeriesEssential mySeries = new SeriesEssential(refCollection);
@@ -743,15 +734,9 @@ public class GUIController implements Initializable {
 		case 2:
 			seriesSetCalibrationType_2(refCollection, mySeries);
 			break;
-
 		default:
 			throw new RuntimeException("Calibration unknow type: " + whichType);
 		}
-
-		// Creates the label on the plots
-		Text text = new Text(mySeries.valueTag);
-		text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
-		mySeries.myData.setNode(text);
 
 		// Add the series in correct thread when done.
 		Platform.runLater(() -> {
@@ -763,9 +748,10 @@ public class GUIController implements Initializable {
 	private void seriesSetCalibrationType_2(DataListCollection refCollection, SeriesEssential mySeries) {
 
 		// Gets data from time ranged from 40~45.
-		Double sampleSize = 0.0, sampleTotal = 0.0;
+		Double sampleSize = 0.0, sampleTotal = 0.0, fileSize = dP.getFileSize(2);
+
 		for (AutoDataType autoData : refCollection.getListAuto()) {
-			if(!(autoData instanceof DataType_2)){
+			if (!(autoData instanceof DataType_2)) {
 				throw new RuntimeException("Fail to convert autotype");
 			}
 			DataType_2 refType_2 = (DataType_2) autoData;
@@ -774,91 +760,45 @@ public class GUIController implements Initializable {
 				sampleTotal += refType_2.getAverageVol();
 			}
 			synchronized (progressCounter) {
-				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSize(2));
+				pbMainProgressBar.setProgress(progressCounter++ / fileSize);
 			}
 		}
-		Double averageVoltage = sampleTotal / sampleSize;
-		System.out.println(averageVoltage + " for " + refCollection.getFileTitle());
-		mySeries.myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(), averageVoltage);
-		mySeries.series.getData().add(mySeries.myData);
-		mySeries.name = refCollection.getConcentration() + " : " + new DecimalFormat("##.##").format(averageVoltage);
-		mySeries.series.setName(mySeries.name);
+		NumberFormat f = new DecimalFormat("##.##");
+		Double xValue = refCollection.getConcentration();
+		Double yValue = sampleTotal / sampleSize;
+		;
+		String nameString = xValue + " : " + f.format(yValue);
 
-		// Creates the label on the plots
-		String value = "(" + refCollection.getConcentration().toString() + " : ";
-		value += new DecimalFormat("##.##").format(averageVoltage) + ")";
-		Text text = new Text(value);
-		text.setTranslateY(-10 + text.getLayoutBounds().getHeight() / 2);
-		text.setTranslateX(45);
-		mySeries.myData.setNode(text);
+		System.out.println(refCollection.getFileTitle() + "(" + nameString + ")");
+		mySeries.setData(xValue, yValue);
+		mySeries.setName(nameString);
+		mySeries.setTag("(" + nameString + ")");
+		// text.setTranslateY(-10 + text.getLayoutBounds().getHeight() / 2);
+		// text.setTranslateX(45);
 	}
 
 	private void seriesSetCalibrationType_1(DataListCollection refCollection, SeriesEssential mySeries) {
 		// Gets data from the reference file and updates the progress bar.
+		Double filesize = dP.getFileSize(1);
+		NumberFormat f = new DecimalFormat("##.##");
+
 		for (AutoDataType autoType : refCollection.getListAuto()) {
 			if (!(autoType instanceof DataType_1)) {
 				throw new RuntimeException("Fail to convert to type 1");
-			} else {
-				DataType_1 dataType_1 = (DataType_1) autoType;
-				if (dataType_1.getVoltage() == dP.getType1Voltage()) {
-					mySeries.myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(),
-							dataType_1.getCurrnet());
-					mySeries.series.getData().add(mySeries.myData);
-					mySeries.valueTag = "      (" + refCollection.getConcentration().toString() + " : "
-							+ new DecimalFormat("##.##").format(dataType_1.getCurrnet()) + ")";
-					System.out.println(mySeries.valueTag);
-
-				}
-				synchronized (progressCounter) {
-					pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSize(1));
-				}
+			}
+			DataType_1 dataType_1 = (DataType_1) autoType;
+			if (dataType_1.getVoltage() == dP.getType1Voltage()) {
+				Double xValue = refCollection.getConcentration();
+				Double yValue = dataType_1.getCurrnet();
+				mySeries.setData(xValue, yValue);
+				mySeries.setTag("(" + xValue + " : " + f.format(yValue) + ")");
+				mySeries.setName(mySeries.valueTag);
+				System.out.println(mySeries.valueTag);
+			}
+			synchronized (progressCounter) {
+				pbMainProgressBar.setProgress(progressCounter++ / filesize);
 			}
 		}
-	}
-
-	private void createSeries_Type_1_Calibration(DataListCollection refCollection) {
-		// Reject type other than 1
-		if (!refCollection.getType().equals(1)) {
-			return;
-		}
-
-		// Creates the series for the plots on the chart.
-		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
-		String seriesName = refCollection.getConcentration() + " : " + refCollection.getFileTitle();
-		series.setName(seriesName);
-		XYChart.Data<Number, Number> myData = new XYChart.Data<>();
-		String value = "";
-
-		// Gets data from the reference file and updates the progress bar.
-		for (AutoDataType autoType : refCollection.getListAuto()) {
-			if (!(autoType instanceof DataType_1)) {
-				throw new RuntimeException("Fail to convert to type 1");
-			} else {
-				DataType_1 dataType_1 = (DataType_1) autoType;
-				if (dataType_1.getVoltage() == dP.getType1Voltage()) {
-					myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(),
-							dataType_1.getCurrnet());
-					series.getData().add(myData);
-					value = "      (" + refCollection.getConcentration().toString() + " : "
-							+ new DecimalFormat("##.##").format(dataType_1.getCurrnet()) + ")";
-					System.out.println(value);
-
-				}
-				synchronized (progressCounter) {
-					pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSize(1));
-				}
-			}
-		}
-
-		// Creates the label on the plots
-		Text text = new Text(value);
-		text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
-		myData.setNode(text);
-
-		// Add the series in correct thread when done.
-		Platform.runLater(() -> {
-			chartMainChart.getData().add(series);
-		});
 	}
 
 	/**
@@ -880,13 +820,15 @@ public class GUIController implements Initializable {
 		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
 		series.setName(refCollection.getConcentration() + " : " + refCollection.getFileTitle());
 		XYChart.Data<Number, Number> myData = new XYChart.Data<>();
+		Double filesize = dP.getFileSize(1);
 
 		// Gets data from the reference file and updates the progress bar.
-		for (DataType_1 refType_1 : refCollection.getListType_1()) {
+		for (AutoDataType auto : refCollection.getListAuto()) {
+			DataType_1 refType_1 = (DataType_1) auto;
 			myData = new XYChart.Data<Number, Number>(refType_1.getVoltage(), refType_1.getCurrnet());
 			series.getData().add(myData);
 			synchronized (progressCounter) {
-				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType1());
+				pbMainProgressBar.setProgress(progressCounter++ / filesize);
 			}
 		}
 
@@ -903,63 +845,13 @@ public class GUIController implements Initializable {
 	}
 
 	/**
-	 * This is a private method that will be ran by multiple tread. This method
-	 * gets data from the reference data collection and adds it into the series.
-	 * The program will add the series into the chart using runLater to run it
-	 * on the main thread.
-	 * 
-	 * @param refCollection
-	 */
-	private void createSeries_Type_2(DataListCollection refCollection) {
-		// Rejects type 1, 3;
-		if (refCollection.getListType_2() == null) {
-			return;
-		}
-
-		// Gets data from time ranged from 40~45.
-		Double sampleSize = 0.0, sampleTotal = 0.0;
-		for (DataType_2 refType_2 : refCollection.getListType_2()) {
-			if (refType_2.getTime() > 40.0 && refType_2.getTime() < 45) {
-				sampleSize++;
-				sampleTotal += refType_2.getAverageVol();
-			}
-			synchronized (progressCounter) {
-				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType2());
-			}
-		}
-		Double averageVoltage = sampleTotal / sampleSize;
-		System.out.println(averageVoltage + " for " + refCollection.getFileTitle());
-
-		// Creates the series for the plots on the chart.
-		final XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
-		XYChart.Data<Number, Number> myData = new XYChart.Data<Number, Number>(refCollection.getConcentration(),
-				averageVoltage);
-		series.getData().add(myData);
-		series.setName(refCollection.getConcentration() + " : " + new DecimalFormat("##.##").format(averageVoltage));
-
-		// Creates the label on the plots
-		String value = "(" + refCollection.getConcentration().toString() + " : ";
-		value += new DecimalFormat("##.##").format(averageVoltage) + ")";
-		Text text = new Text(value);
-		text.setTranslateY(-10 + text.getLayoutBounds().getHeight() / 2);
-		text.setTranslateX(45);
-		myData.setNode(text);
-
-		// Add the series in correct thread when done.
-		Platform.runLater(() -> {
-			chartMainChart.getData().add(series);
-		});
-
-	}
-
-	/**
 	 * TODO
 	 * 
 	 * @param refCollection
 	 */
 	private void createSeries_Type_3(DataListCollection refCollection) {
-		// Rejects type 1, 2;
-		if (refCollection.getListType_3() == null) {
+		// Rejects type;
+		if (refCollection.getType() != 3) {
 			return;
 		}
 
@@ -968,7 +860,9 @@ public class GUIController implements Initializable {
 		XYChart.Data<Number, Number> myData = new XYChart.Data<Number, Number>();
 		Double newCurrent = -Double.MAX_VALUE, oldCurrent = 0.0, omnCurrent = 0.0, nmoCurrent, lastCurrentChange = 0.0;
 		Double xEP = -1000.0, de = 1.0, nu = 0.0, average = 0.0;
-		for (DataType_3 refType_3 : refCollection.getListType_3()) {
+		Double filesize = dP.getFileSize(3);
+		for (AutoDataType auto : refCollection.getListAuto()) {
+			DataType_3 refType_3 = (DataType_3) auto;
 			oldCurrent = newCurrent;
 			newCurrent = refType_3.getCurrent();
 			omnCurrent = oldCurrent - newCurrent;
@@ -1000,7 +894,7 @@ public class GUIController implements Initializable {
 			}
 
 			synchronized (progressCounter) {
-				pbMainProgressBar.setProgress(progressCounter++ / dP.getFileSizeType3());
+				pbMainProgressBar.setProgress(progressCounter++ / filesize);
 			}
 		}
 
@@ -1040,16 +934,16 @@ public class GUIController implements Initializable {
 			btnEdit.setDisable(false);
 			for (DataListCollection refDataCollection : dP.getDataCollection()) {
 				// Collection has type1, then enables the Comparison button
-				if (btnComparisonPlot.isDisable() && refDataCollection.getListType_1() != null) {
+				if (btnComparisonPlot.isDisable() && refDataCollection.getType() == 1) {
 					btnComparisonPlot.setDisable(false);
 					btnCalibrationType1.setDisable(false);
 				}
 				// Collection has type2, then enables the Calibration button
-				if (btnCalibrationType2.isDisable() && refDataCollection.getListType_2() != null) {
+				if (btnCalibrationType2.isDisable() && refDataCollection.getType() == 2) {
 					btnCalibrationType2.setDisable(false);
 				}
 				// Collection has type3, then enables the Peak Current button
-				if (btnPeakCurrentPlot.isDisabled() && refDataCollection.getListType_3() != null) {
+				if (btnPeakCurrentPlot.isDisabled() && refDataCollection.getType() == 3) {
 					btnPeakCurrentPlot.setDisable(false);
 				}
 			}
@@ -1310,17 +1204,12 @@ public class GUIController implements Initializable {
 			{
 				out.print("\n---MainScreen---\n");
 				out.println(dP.getReport());
-				/*List<String> someString = new ArrayList<>();
-				for (Integer i = 0; i < 5; i++) {
-					someString.add(i.toString());
-				}**/
 				if (sM.isAlertClearDataComirmed) {
 					dP.resetProviderAndKeepData(false);
 					fM.deletePathFile();
 					sM.isAlertClearDataComirmed = false;
 					executeStateMachine();
 				}
-
 				break;
 			}
 
@@ -1385,10 +1274,31 @@ class SeriesEssential {
 	XYChart.Data<Number, Number> myData;
 	String valueTag = "No value";
 	String name = "No name";
-	
+
 	public SeriesEssential(DataListCollection refCollection) {
 		series = new XYChart.Series<Number, Number>();
 		myData = new XYChart.Data<>();
+	}
+
+	public void setName(String toSet) {
+		name = toSet;
+		series.setName(name);
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setTag(String toSet) {
+		valueTag = toSet;
+		Text text = new Text(valueTag);
+		text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
+		myData.setNode(text);
+	}
+
+	public void setData(Number x, Number y) {
+		myData = new XYChart.Data<Number, Number>(x, y);
+		series.getData().add(myData);
 	}
 
 }

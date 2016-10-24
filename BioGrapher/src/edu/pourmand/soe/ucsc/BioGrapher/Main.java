@@ -29,9 +29,6 @@ public class Main extends Application {
 	public static void main(String[] args) {
 		Application.launch(args);
 	}
-	/**
-	 * This method makes starts the GUI and execute the state machine.
-	 */
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		sM.running = createMainScreen(primaryStage);
@@ -40,7 +37,6 @@ public class Main extends Application {
 		GUIController.executeStateMachine();
 	}
 	
-
 	/**
 	 * This is the method which generates a main window.
 	 * 
@@ -76,7 +72,4 @@ public class Main extends Application {
 					msg.getString("<GUITEXT>ContentConfirm_LoadPathFile"));
 		}
 	}
-
-	
-
 }
