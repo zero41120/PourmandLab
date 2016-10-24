@@ -1,13 +1,18 @@
+import java.util.ArrayList;
 
 public class CPMark {
 	Double headTime = null;
 	Double tailTime = null;
-	Double headCurr = null;
-	Double tailCurr = null;
+	ArrayList<Double> headCurr = null;
+	ArrayList<Double> tailCurr = null;
 	Double nearPoti = null;
-
+	
+	public CPMark() {
+		headCurr = new ArrayList<>();
+		tailCurr = new ArrayList<>();
+	}
 	public boolean ready() {
-		return (tailCurr == null)? false : true;
+		return (nearPoti == null)? false : true;
 	}
 	
 	public Double getHeadTime() {
@@ -17,13 +22,15 @@ public class CPMark {
 	public Double getTailTime() {
 		return tailTime;
 	}
-
-	public Double getHeadCurr() {
-		return headCurr;
+	public Integer getExperimentCount(){
+		return headCurr.size();
+	}
+	public Double getHeadCurr(Integer which) {
+		return headCurr.get(which);
 	}
 
-	public Double getTailCurr() {
-		return tailCurr;
+	public Double getTailCurr(Integer which) {
+		return tailCurr.get(which);
 	}
 
 	public Double getNearPoti() {
@@ -39,11 +46,11 @@ public class CPMark {
 	}
 
 	public void setHeadCurr(Double headCurr) {
-		this.headCurr = headCurr;
+		this.headCurr.add(headCurr);
 	}
 
 	public void setTailCurr(Double tailCurr) {
-		this.tailCurr = tailCurr;
+		this.tailCurr.add(tailCurr);
 	}
 
 	public void setNearPoti(Double nearPoti) {

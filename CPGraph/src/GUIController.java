@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,12 +28,12 @@ import javafx.stage.Stage;
 
 public class GUIController implements Initializable {
 	// @formatter:off
-	@FXML	Button	buttonBrowse;
-	@FXML	Button 	buttonRun;
-	@FXML	Button	buttonView;
+	@FXML	Button	buttonBrowse, buttonRun, buttonView;
 	static Stage refStage = null;
 	static ArrayList<File> myFiles = new ArrayList<>();
-	final static Pattern format = Pattern.compile("^([0-9]+.?[0-9]+)\\t([0-9\\-]+.?[0-9]+)\\t([0-9\\-]+.?[0-9]+)$");
+	// Number.Number \t Number.Number \t Number.Number Ramiz
+	final static Pattern ramizFormat = 
+			Pattern.compile("^([0-9]+.?[0-9]*)((\\t[0-9\\-]+.?[0-9]*){2,})$");
 	static String rootDir = null;
 	// @formatter:on
 
@@ -55,7 +56,7 @@ public class GUIController implements Initializable {
 	public static boolean createMainScreen(Stage primaryStage) {
 		try {
 			Parent root = FXMLLoader.load(Main.class.getResource("main.fxml"));
-			primaryStage.setTitle("CPGrapher 1.1");
+			primaryStage.setTitle("CPGrapher 1.3");
 			primaryStage.setScene(new Scene(root));
 			primaryStage.show();
 			System.out.println("Program starts");
@@ -90,7 +91,7 @@ public class GUIController implements Initializable {
 			System.out.println("User selected some files.");
 			buttonRun.setDisable(false);
 			buttonView.setDisable(true);
-			myFiles = getATFFiles(atfFiles);
+			myFiles = FileManager.getATFFiles(atfFiles);
 			for (File file : myFiles) {
 				System.out.println(file.getName());
 			}
@@ -121,10 +122,11 @@ public class GUIController implements Initializable {
 				String line = "";
 				CPMark mark = new CPMark();
 				while ((line = readBuffer.readLine()) != null) {
-					Matcher matcher = format.matcher(line);
-					while (matcher.find()) {
-						setInterest(mark, matcher);
+					Matcher rMatcher = ramizFormat.matcher(line);
+					while (rMatcher.find()) {
+						setInterest(mark, rMatcher);
 						if (mark.ready()) {
+							System.out.println(mark);
 							marks.add(mark);
 							mark = new CPMark();
 						}
@@ -132,10 +134,11 @@ public class GUIController implements Initializable {
 				}
 
 			} catch (Exception e) {
-				// TODO: handle exception
+				e.printStackTrace();
 			}
 			if (marks.size() > 0) {
 				names.add(file.getName());
+				System.out.println("File scan complete: " + file.getName());
 			}
 		}
 		
@@ -168,24 +171,9 @@ public class GUIController implements Initializable {
 		}
 	}
 
-	private String getFileExtension(File file) {
-		String name = file.getName();
-		try {
-			return name.substring(name.lastIndexOf(".") + 1);
-		} catch (Exception e) {
-			return "";
-		}
-	}
+	
 
-	private ArrayList<File> getATFFiles(List<File> targetFiles) {
-		ArrayList<File> toReturn = new ArrayList<>();
-		for (int i = 0; i < targetFiles.size(); i++) {
-			if (getFileExtension(targetFiles.get(i)).equals("atf")) {
-				toReturn.add(targetFiles.get(i));
-			}
-		}
-		return toReturn;
-	}
+	
 
 	/**
 	 * This method set the point of interest. When the matcher's first
@@ -200,12 +188,21 @@ public class GUIController implements Initializable {
 
 		if (Arrays.asList(interestHead).contains(matcher.group(1))) {
 			mark.setHeadTime(Double.parseDouble(matcher.group(1)));
-			mark.setHeadCurr(Double.parseDouble(matcher.group(2)));
+			String dataStr = matcher.group(2);
+			StringTokenizer stk = new StringTokenizer(dataStr, "\t");
+			for(int i = 0; i < stk.countTokens(); i+=2){
+				mark.setHeadCurr(Double.parseDouble(stk.nextToken()));
+			}
 		} else if (Arrays.asList(interestTail).contains(matcher.group(1))) {
-			int num = (int) Double.parseDouble(matcher.group(3));
-			int rounded = (((num + 99) / 100) * 100);
 			mark.setTailTime(Double.parseDouble(matcher.group(1)));
-			mark.setTailCurr(Double.parseDouble(matcher.group(2)));
+			String dataStr = matcher.group(2);
+			StringTokenizer stk = new StringTokenizer(dataStr, "\t");
+			int rawPoti = 0;
+			for(int i = 0; i < stk.countTokens(); i++){
+				mark.setTailCurr(Double.parseDouble(stk.nextToken()));
+				rawPoti = (int) Double.parseDouble(stk.nextToken());
+			}
+			int rounded = (((rawPoti + 99) / 100) * 100) - 200;
 			mark.setNearPoti(rounded + 0.0);
 		}
 	}
