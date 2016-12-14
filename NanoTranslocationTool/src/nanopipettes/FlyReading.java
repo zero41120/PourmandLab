@@ -10,7 +10,7 @@ public class FlyReading extends DataProvider {
 		// TODO Auto-generated method stub
 		
 	}
-	
+	// why do we have two scanData methods? 
 	public void scanData(Double startTime, Double endTime, File inputText) {
 		// TODO Auto-generated method stub
 		
