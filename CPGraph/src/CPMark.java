@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
@@ -37,12 +36,44 @@ public class CPMark extends CPExcel {
 	ArrayList<Double> headCurr = null;
 	ArrayList<Double> tailCurr = null;
 	Double nearPoti = null;
-
+	//static String[] interestHead = { "17.03", "27.2", "37.01", "47.35", "57.34", "67.25", "77.15", "87.06" };
+	//static String[] interestTail = { "18.68", "28.41", "38.23", "48.66", "58.73", "68.47", "78.63", "88.45" };
+	static ArrayList<String> interestHead = null;
+	static ArrayList<String> interestTail = null;
+	
 	public CPMark() {
 		headCurr = new ArrayList<>();
 		tailCurr = new ArrayList<>();
 	}
-
+	
+	static public void findTarget(File file) throws Exception{
+		ArrayList<String> heads = new ArrayList<>();
+		ArrayList<String> tails = new ArrayList<>();
+		BufferedReader readBuffer = FileManager.getReader(file);
+		String line = "";
+		boolean toggle = true;
+		while ((line = readBuffer.readLine()) != null) {
+			Pattern p = Pattern.compile("([0-9]+(\\.?[0-9]*)?)");
+			Matcher m = p.matcher(line);
+			System.out.print(line);
+			while (m.find()) {
+				System.out.println(" match");
+				if (toggle) heads.add(m.group(1));
+				else tails.add(m.group(1));
+				toggle = toggle? false:true;
+			}
+		}
+		
+		if (heads.size() != tails.size()){
+			throw new RuntimeException("Target file does not provide pairs of start and end");
+		} else {
+			interestHead = heads;
+			interestTail = tails;
+			System.out.println(interestHead);
+			System.out.println(interestTail);
+		}
+	}
+	
 	public boolean ready() throws IllegalArgumentException, IllegalAccessException {
 		for (Field f : getClass().getDeclaredFields()) {
 			if (f.get(this) == null)
@@ -56,13 +87,10 @@ public class CPMark extends CPExcel {
 	 * group(time) is the interest point, add correct data to correct field.
 	 */
 	static public void checkInterest(CPMark mark, Matcher matcher) {
-
-		final String[] interestHead = { "17.03", "27.2", "37.01", "47.35", "57.34", "67.25", "77.15", "87.06" };
-		final String[] interestTail = { "18.68", "28.41", "38.23", "48.66", "58.73", "68.47", "78.63", "88.45" };
 		int rawPoti = 0;
-		int auto = Arrays.asList(interestHead).contains(matcher.group(1)) ? 2
-				: Arrays.asList(interestTail).contains(matcher.group(1)) ? 1 : 0;
-
+		int auto = interestHead.contains(matcher.group(1))? 2 : 
+			interestTail.contains(matcher.group(1))? 1 : 0;
+		
 		if (auto > 0) {
 			mark.setAutoTime(Double.parseDouble(matcher.group(1)), auto);
 			StringTokenizer stk = new StringTokenizer(matcher.group(2), "\t");
@@ -235,11 +263,13 @@ class CPExcel {
 	}
 }
 
+
 class CPGUIAction {
 
 	static File lastOutput = null;
 	
 	public void doRun(String rootDir, ArrayList<File> myFiles, Pattern p) throws Exception {
+		System.out.println("hello");
 		ArrayList<CPMark> marks = new ArrayList<>();
 		ArrayList<String> names = new ArrayList<>();
 		for (File file : myFiles) {
@@ -269,3 +299,4 @@ class CPGUIAction {
 		Desktop.getDesktop().open(lastOutput);
 	}
 }
+

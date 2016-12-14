@@ -29,9 +29,10 @@ interface GUIActions{
 }
 public class GUIController implements Initializable {
 	// @formatter:off
-	@FXML	Button	buttonBrowse, buttonRun, buttonView;
+	@FXML	Button	buttonBrowse, buttonRun, buttonView, buttonTarget;
 	static Stage refStage = null;
 	static ArrayList<File> myFiles = new ArrayList<>();
+	static File targetFile = null;
 	final static Pattern ramizFormat = 
 			Pattern.compile("^([0-9]+.?[0-9]*)((\\t[0-9\\-]+.?[0-9]*){2,})$");
 	static String rootDir = null;
@@ -80,12 +81,22 @@ public class GUIController implements Initializable {
 		if (targetFiles != null) {
 			System.out.println("Scan for atf files: ");
 			if ((myFiles = FileManager.getTextFiles(targetFiles)) != null) {
-				disalbeButtons(false, true);
 				for (File file : myFiles) {
 					System.out.println("\t+" + file.getName());
 				}
 			}
+			if(targetFile != null && myFiles.size() > 0) disalbeButtons(false, true);
 		}
+	}
+	
+	public void actionTarget(){
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Choose target file");
+		File tFile = chooser.showOpenDialog(refStage);
+		if(tFile != null) {
+			targetFile = tFile;
+		}
+		if(targetFile != null && myFiles != null) disalbeButtons(false, true);
 	}
 
 	/**
@@ -102,6 +113,7 @@ public class GUIController implements Initializable {
 		System.out.println("Location to save: " + rootDir);
 		
 		try {
+			CPMark.findTarget(targetFile);
 			new CPGUIAction().doRun(rootDir, myFiles, ramizFormat);
 			disalbeButtons(true, false);
 		} catch (Exception e){

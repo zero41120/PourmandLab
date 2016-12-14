@@ -14,5 +14,6 @@
 		<Button fx:id="buttonBrowse" layoutX="122.0" layoutY="14.0" mnemonicParsing="false" onAction="#actionBrowse" text="Browse" />
 		<Button fx:id="buttonRun" layoutX="122.0" layoutY="149.0" mnemonicParsing="false" onAction="#actionRun" text="RunSave" />
       	<Button fx:id="buttonView" layoutX="34.0" layoutY="149.0" mnemonicParsing="false" onAction="#actionView" text="View" />
+      <Button fx:id="buttonTarget" layoutX="28.0" layoutY="14.0" mnemonicParsing="false" onAction="#actionTarget" text="Target" />
 	</children>
 </Pane>
