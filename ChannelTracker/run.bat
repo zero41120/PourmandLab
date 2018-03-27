@@ -1,0 +1,1 @@
+python channel_tracker.py & pause
