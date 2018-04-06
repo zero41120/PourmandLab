@@ -9,6 +9,9 @@ def get_site_content(cache_filename, url):
 			f.write(html_content)
 	return open(filename, "r", encoding='UTF-8').read()
 
+
+##
+# Publications from old site
 # Site to scraper
 filename = "publications.html"
 site = "https://bionanotech.soe.ucsc.edu/content/publications"
@@ -54,7 +57,8 @@ for obj in pub_objs:
 # 	print('\t' + obj['link'][0:50])
 
 
-
+##
+# Patents from old site
 # Site to scraper
 filename = "patents.html"
 site = "https://bionanotech.soe.ucsc.edu/content/patents"
@@ -87,38 +91,77 @@ for tag in litags:
 # 	print('\t' + obj['time'][0:50])
 # 	print('\t' + obj['link'][0:50])
 
+##
+# Publications and patent from Google scholar
+filename = "google_pourmand.html"
+site = "" # Manually downloaded since nasty Javascript
 
-print(len(pub_objs))
+# Open site and parse DOM object
+html_content = get_site_content(filename, site)
+dom = soup(html_content, "html.parser")
+trtags = dom.findAll('tr', {'class': 'gsc_a_tr'})
 
-with open('publication.markdown', 'w', encoding='UTF-8') as f:
-	start_time = 2016
-	for obj in pub_objs:
-		m = ''
-		if start_time != int(obj['time']):
-			print('comparetime', start_time, int(obj['time']))
-			if int(obj['time']) < 2016 and int(obj['time']) > 1997:
-				start_time -= 1 
-				m += '<h1>' +str(start_time)+ '</h1>\n'
-				m += '---\n\n'
+# Scrape data from html for publication 
+goo_objs = []
+goo_obj = { 'title': None, 'people': None, 'time': None, 'link': None, 'type': None}
+for i, tr in enumerate(trtags):
+		print(i, tr)
+		goo_obj['title']  = tr.find('a').text
+		goo_obj['people'] = tr.findAll('div', {'class': 'gs_gray'})[0].text
+		goo_obj['type']   = 'patent' if 'patent' in tr.findAll('div', {'class': 'gs_gray'})[1].text else 'publication'
+		goo_obj['time']   = tr.find('span').text
 
-		m += '* '
-		m += '<h2>[' + obj['title'] + '](' + obj['link'] + ')</h2>\n'
-		m += '<p>*' + obj['people'] + '*</p>\n'
-		f.write(m + '\n\n')
+		if not None in [goo_obj['title'], goo_obj['people'],goo_obj['time'],goo_obj['type']]:
+		 	goo_objs.append(goo_obj)
+		 	goo_obj = { 'title': None, 'people': None, 'time': None, 'link': None, 'type': None}
+
+# Format information from data
+for obj in goo_objs:
+	m = re.search('([0-9]{4})', obj['time'])
+	if m:
+		obj['time'] = m.group(1)
+
+# Print information
+for obj in goo_objs:
+	print(obj['title'][0:100])
+	print('\t' + obj['people'][0:50])
+	print('\t' + obj['time'][0:50])
+	#print('\t' + obj['link'][0:50])
 
 
-print(len(pat_objs))
 
-with open('patent.markdown', 'w', encoding='UTF-8') as f:
-	start_time = 2016
-	for obj in sorted(pat_objs, key=lambda x: x['time'], reverse=True):
-		m = ''
-		if start_time != int(obj['time']):
-				m += '<h1>' + str(obj['time']) + '</h1>\n'
-				m += '---\n\n'
-				start_time = int(obj['time'])
 
-		m += '* '
-		m += '<h2>[' + obj['title'] + '](' + obj['link'] + ')</h2>\n'
-		m += '<p>*' + obj['people'] + '*</p>\n'
-		f.write(m + '\n\n')
+# print(len(pub_objs))
+
+# with open('publication.markdown', 'w', encoding='UTF-8') as f:
+# 	start_time = 2016
+# 	for obj in pub_objs:
+# 		m = ''
+# 		if start_time != int(obj['time']):
+# 			print('comparetime', start_time, int(obj['time']))
+# 			if int(obj['time']) < 2016 and int(obj['time']) > 1997:
+# 				start_time -= 1 
+# 				m += '<h1>' +str(start_time)+ '</h1>\n'
+# 				m += '---\n\n'
+
+# 		m += '* '
+# 		m += '<h2>[' + obj['title'] + '](' + obj['link'] + ')</h2>\n'
+# 		m += '<p>*' + obj['people'] + '*</p>\n'
+# 		f.write(m + '\n\n')
+
+
+# print(len(pat_objs))
+
+# with open('patent.markdown', 'w', encoding='UTF-8') as f:
+# 	start_time = 2016
+# 	for obj in sorted(pat_objs, key=lambda x: x['time'], reverse=True):
+# 		m = ''
+# 		if start_time != int(obj['time']):
+# 				m += '<h1>' + str(obj['time']) + '</h1>\n'
+# 				m += '---\n\n'
+# 				start_time = int(obj['time'])
+
+# 		m += '* '
+# 		m += '<h2>[' + obj['title'] + '](' + obj['link'] + ')</h2>\n'
+# 		m += '<p>*' + obj['people'] + '*</p>\n'
+# 		f.write(m + '\n\n')
